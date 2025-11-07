@@ -272,7 +272,7 @@ function formatCurrency($amount) {
         <?php if ($productivityData !== null && !$errorMessage): ?>
             <div class="summary-header">
                 <h2>Employee Productivity Report</h2>
-                <p><?php echo $filterLabel; ?> | Tracking <?php echo count($productivityData); ?> ad account(s)</p>
+                <p><?php echo $filterLabel; ?> | Tracking <?php echo count($productivityData); ?> ad account(s) | <strong>Showing Active Created Entities Only</strong></p>
             </div>
 
             <table class="productivity-table">
