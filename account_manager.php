@@ -63,7 +63,7 @@ class AccountManager {
         return null;
     }
     
-    public function addAccount($name, $accountId) {
+    public function addAccount($accountId) {
         if (!str_starts_with($accountId, 'act_')) {
             $accountId = 'act_' . $accountId;
         }
@@ -80,7 +80,7 @@ class AccountManager {
         
         $accounts[] = [
             'id' => $id,
-            'name' => $name,
+            'name' => 'Ad Account ' . $id,
             'account_id' => $accountId,
             'account_status' => 1,
             'currency' => 'USD',

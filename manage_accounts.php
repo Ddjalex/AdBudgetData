@@ -14,14 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
             case 'add_account':
-                $name = trim($_POST['account_name'] ?? '');
                 $accountId = trim($_POST['account_id'] ?? '');
                 
-                if (empty($name) || empty($accountId)) {
-                    $message = 'Both Account Name and Account ID are required.';
+                if (empty($accountId)) {
+                    $message = 'Ad Account ID is required.';
                     $messageType = 'error';
                 } else {
-                    $result = $accountManager->addAccount($name, $accountId);
+                    $result = $accountManager->addAccount($accountId);
                     if ($result['success']) {
                         $message = 'Ad Account added successfully!';
                         $messageType = 'success';
@@ -244,7 +243,7 @@ $accounts = $accountManager->getAccounts();
                 <li>Go to <a href="https://business.facebook.com/settings/ad-accounts" target="_blank">Facebook Business Settings</a></li>
                 <li>Select the Ad Account you want to track</li>
                 <li>The Account ID will be displayed in the format "1234567890" (numbers only)</li>
-                <li>Enter this ID in the form below along with a friendly name</li>
+                <li>Enter this ID in the form below (account name will be auto-generated)</li>
             </ul>
         </div>
 
@@ -253,12 +252,6 @@ $accounts = $accountManager->getAccounts();
             <form method="POST">
                 <input type="hidden" name="action" value="add_account">
                 
-                <div class="form-group">
-                    <label for="account_name">Account Name</label>
-                    <input type="text" id="account_name" name="account_name" placeholder="e.g., My Business Account" required>
-                    <small>A friendly name to identify this account</small>
-                </div>
-
                 <div class="form-group">
                     <label for="account_id">Ad Account ID</label>
                     <input type="text" id="account_id" name="account_id" placeholder="e.g., 1234567890" required>

@@ -19,9 +19,9 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 ## Key Features
 
 ### Manual Multi-Account Management
-- **Manual Account Entry**: Add multiple Ad Accounts by entering Account ID and a friendly name
+- **Manual Account Entry**: Add multiple Ad Accounts by entering just the Account ID
 - **Track Unlimited Ad Accounts**: Manage and monitor unlimited Facebook Ad Accounts from a single dashboard
-- **Simple Account Addition**: Enter your Ad Account ID and a custom name to add new accounts
+- **Simple Account Addition**: Enter your Ad Account ID to add new accounts (names are auto-generated)
 - **Quick Account Switching**: Dropdown selector to switch between accounts instantly
 - **Account-Specific Data**: All metrics and reports are scoped to the selected Ad Account
 - **Easy Account Management**: Set active account, remove accounts, and manage all accounts from one interface
@@ -88,7 +88,7 @@ To get your Facebook API credentials:
 ### 2. Add Your Ad Accounts Manually
 1. Click the **Accounts** button in the dashboard
 2. Find your Ad Account ID in Facebook Business Settings
-3. Enter the Account Name and Account ID in the form
+3. Enter the Account ID in the form (account name will be auto-generated)
 4. Click "Add Account" to save the account
 
 ### 3. Switch Between Accounts
@@ -114,7 +114,7 @@ Handles multi-account storage and management:
 
 - `getAccounts()`: Retrieve all configured accounts
 - `getActiveAccount()`: Get the currently active account
-- `addAccount($name, $accountId)`: Add a new account manually
+- `addAccount($accountId)`: Add a new account manually (name auto-generated)
 - `setActiveAccount($id)`: Switch to a different account
 - `deleteAccount($id)`: Remove an account
 
@@ -129,10 +129,9 @@ Handles multi-account storage and management:
 
 ### Adding Accounts Manually
 1. Navigate to the Accounts page
-2. Enter a friendly name for your account
-3. Enter your Ad Account ID (numbers only)
-4. Click "Add Account" to save
-5. The account will be added to your account list
+2. Enter your Ad Account ID (numbers only)
+3. Click "Add Account" to save
+4. The account will be added with an auto-generated name (e.g., "Ad Account 1234567890")
 
 ### Switching Between Accounts
 1. Use the dropdown selector at the top of the dashboard
@@ -167,7 +166,7 @@ Handles multi-account storage and management:
   - **DELETED** `discoverAdAccounts()` method from FacebookAdsAPI class
   - **DELETED** `syncDiscoveredAccounts()` method from AccountManager class
   - **REMOVED** "Discover Ad Accounts" button and auto-discovery UI from manage_accounts.php
-  - **IMPLEMENTED** clean manual account entry form with Account Name and Account ID fields
+  - **IMPLEMENTED** clean manual account entry form with only Account ID field (names auto-generated)
   - **UPDATED** `addAccount()` method to include default values for all account fields
   - **SIMPLIFIED** account management to manual entry only
   - **IMPROVED** user control over account management with straightforward manual addition
@@ -212,7 +211,7 @@ Handles multi-account storage and management:
 ### Cannot Add Account
 - Verify your Ad Account ID is correct (numbers only, e.g., 1234567890)
 - Check that you haven't already added this account
-- Make sure both Account Name and Account ID are filled in
+- Make sure the Account ID field is filled in
 
 ### API Errors When Loading Data
 - Verify your access token has `ads_read` and `ads_management` permissions
