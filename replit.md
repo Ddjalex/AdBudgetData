@@ -79,6 +79,16 @@ The application uses a custom PHP class to interact with the Facebook Marketing 
 - Hierarchical data organization (Campaign → Ad Set → Ad)
 
 ## Recent Changes
+- **2025-11-07**: UI Redesign to Facebook Ads Manager style
+  - Redesigned entire interface with modern white card-based layout
+  - Changed background from gradient to professional light grey (#f0f2f5)
+  - Added summary cards showing Total Lifetime Spend, Today's Spend, Total Campaigns, and Active Campaigns
+  - Implemented Facebook-style typography and spacing
+  - Updated table styling with cleaner borders and hover effects
+  - Removed all emojis for professional appearance
+  - Added colored border-left accents to cards
+  - Improved responsive design for mobile devices
+  
 - **2025-11-07**: Initial project setup with PHP 8.4
   - Created core file structure
   - Implemented Facebook Marketing API integration
