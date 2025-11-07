@@ -33,43 +33,42 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
             
             foreach ($allAccounts as $account) {
                 $employeeName = getEmployeeByAccountId($account['account_id']);
+                $accountId = $account['account_id'];
                 
-                if (!isset($productivityData[$employeeName])) {
-                    $productivityData[$employeeName] = [
-                        'campaigns_created' => 0,
-                        'adsets_created' => 0,
-                        'ads_created' => 0,
-                        'total_allocated_budget' => 0,
-                        'accounts' => []
-                    ];
-                }
+                $productivityData[$accountId] = [
+                    'employee_name' => $employeeName,
+                    'account_id' => $accountId,
+                    'account_name' => $account['name'],
+                    'campaigns_created' => 0,
+                    'adsets_created' => 0,
+                    'ads_created' => 0,
+                    'total_allocated_budget' => 0
+                ];
                 
-                $api = new FacebookAdsAPI($account['account_id']);
+                $api = new FacebookAdsAPI($accountId);
                 
                 $campaigns = $api->getCampaignsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($campaigns['error'])) {
-                    $productivityData[$employeeName]['campaigns_created'] += count($campaigns);
+                    $productivityData[$accountId]['campaigns_created'] = count($campaigns);
                     
                     foreach ($campaigns as $campaign) {
                         if (isset($campaign['lifetime_budget'])) {
-                            $productivityData[$employeeName]['total_allocated_budget'] += $campaign['lifetime_budget'] / 100;
+                            $productivityData[$accountId]['total_allocated_budget'] += $campaign['lifetime_budget'] / 100;
                         } elseif (isset($campaign['daily_budget'])) {
-                            $productivityData[$employeeName]['total_allocated_budget'] += ($campaign['daily_budget'] / 100) * 30;
+                            $productivityData[$accountId]['total_allocated_budget'] += ($campaign['daily_budget'] / 100) * 30;
                         }
                     }
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($adsets['error'])) {
-                    $productivityData[$employeeName]['adsets_created'] += count($adsets);
+                    $productivityData[$accountId]['adsets_created'] = count($adsets);
                 }
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($ads['error'])) {
-                    $productivityData[$employeeName]['ads_created'] += count($ads);
+                    $productivityData[$accountId]['ads_created'] = count($ads);
                 }
-                
-                $productivityData[$employeeName]['accounts'][] = $account['name'];
             }
             
         } catch (Exception $e) {
@@ -267,19 +266,19 @@ function formatCurrency($amount) {
         <?php if ($productivityData !== null && !$errorMessage): ?>
             <div class="summary-header">
                 <h2>Employee Productivity Report</h2>
-                <p><?php echo $filterLabel; ?> | Tracking <?php echo count($productivityData); ?> employee(s)</p>
+                <p><?php echo $filterLabel; ?> | Tracking <?php echo count($productivityData); ?> ad account(s)</p>
             </div>
 
             <table class="productivity-table">
                 <thead>
                     <tr>
                         <th>Employee Name</th>
+                        <th>Ad Account ID</th>
                         <th>Campaigns Created</th>
                         <th>Ad Sets Created</th>
                         <th>Ads Created</th>
                         <th>Total Entities</th>
                         <th>Total Allocated Budget</th>
-                        <th>Accounts Managed</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -289,7 +288,7 @@ function formatCurrency($amount) {
                     $totalAds = 0;
                     $totalBudget = 0;
                     
-                    foreach ($productivityData as $employee => $data): 
+                    foreach ($productivityData as $accountId => $data): 
                         $totalEntities = $data['campaigns_created'] + $data['adsets_created'] + $data['ads_created'];
                         $totalCampaigns += $data['campaigns_created'];
                         $totalAdSets += $data['adsets_created'];
@@ -297,25 +296,24 @@ function formatCurrency($amount) {
                         $totalBudget += $data['total_allocated_budget'];
                     ?>
                         <tr>
-                            <td><strong><?php echo htmlspecialchars($employee); ?></strong></td>
+                            <td><strong><?php echo htmlspecialchars($data['employee_name']); ?></strong></td>
+                            <td><code><?php echo htmlspecialchars(str_replace('act_', '', $accountId)); ?></code></td>
                             <td><span class="metric-value"><?php echo $data['campaigns_created']; ?></span></td>
                             <td><span class="metric-value"><?php echo $data['adsets_created']; ?></span></td>
                             <td><span class="metric-value"><?php echo $data['ads_created']; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalEntities; ?></span></td>
                             <td><span class="budget-value"><?php echo formatCurrency($data['total_allocated_budget']); ?></span></td>
-                            <td><?php echo implode(', ', $data['accounts']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                     
                     <?php if (count($productivityData) > 1): ?>
                         <tr style="background: #f0f2f5; font-weight: 700;">
-                            <td>TOTAL</td>
+                            <td colspan="2">TOTAL</td>
                             <td><span class="metric-value"><?php echo $totalCampaigns; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalAdSets; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalAds; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalCampaigns + $totalAdSets + $totalAds; ?></span></td>
                             <td><span class="budget-value"><?php echo formatCurrency($totalBudget); ?></span></td>
-                            <td>-</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

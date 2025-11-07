@@ -1,0 +1,34 @@
+**Project Enhancement: Restructuring Report to Group by Ad Account ID**
+
+**Current Status:**
+The "Employee Productivity Report" currently aggregates (sums up) creation metrics and allocated budget from multiple Ad Accounts (e.g., '117...' and '129...') and displays them as a single row under the associated employee (or 'Unknown Employee').
+
+**Critical New Requirement:**
+The report must be restructured so that the productivity metrics are **NOT aggregated** across different Ad Accounts. Instead, the data should be displayed granularly, with **one separate row for each Ad Account ID** being tracked, even if they belong to the same employee.
+
+**Implementation Goal (Report Output):**
+The final report table must show the following breakdown:
+
+| Employee Name | Ad Account ID | Campaigns Created | Ad Sets Created | Ads Created | Total Entities | Total Allocated Budget |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Unknown Employee | 1172715431415433 | 5 | 2 | 7 | 14 | $339.00 |
+| Unknown Employee | 1297476775187986 | X | Y | Z | W | $A.BC |
+| ... | ... | ... | ... | ... | ... | ... |
+
+**Implementation Steps (Tasks for Replit Agent):**
+
+1.  **PHP Data Processing Logic:**
+    * Modify the PHP function responsible for fetching and processing data from the Facebook API.
+    * The processing loop must now calculate the metrics (**Created Counts** and **Allocated Budget**) separately for **EACH** Ad Account ID. **Aggregation across accounts must be removed.**
+    * Data results should be structured as an array where the primary key for grouping is the **Ad Account ID**, not the Employee Name alone.
+
+2.  **Reporting Table Modification (HTML/CSS):**
+    * Update the HTML table structure and PHP display loop.
+    * The display loop must iterate through the results and create a **new row** for every unique **Ad Account ID** found in the processed data.
+    * Add a new column to the report table specifically for the **Ad Account ID**.
+    * The original "Accounts Managed" column should be removed or repurposed, as the account ID will now be in its own row.
+
+3.  **Employee Name Mapping:**
+    * The employee name mapping logic (e.g., `$employee_map`) should still be used to assign a name, but that name will now repeat across all the accounts managed by that employee.
+
+**Start by showing the updated PHP data structure that holds the report metrics, ensuring the Ad Account ID is the key grouping identifier for the data.**
