@@ -82,8 +82,9 @@ function formatDate($dateString) {
             <h1>Facebook Ads Budget Tracker</h1>
             <p>Track and analyze your Facebook advertising campaigns, ad sets, and ads in real-time</p>
             <div style="position: absolute; top: 30px; right: 30px; display: flex; gap: 10px; z-index: 1000;">
-                <a href="manage_accounts.php" style="background: #42b72a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">📊 Accounts</a>
-                <a href="settings.php" style="background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">⚙ Settings</a>
+                <a href="employee_productivity.php" style="background: #8b5cf6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">Employee Productivity</a>
+                <a href="manage_accounts.php" style="background: #42b72a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">Accounts</a>
+                <a href="settings.php" style="background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">Settings</a>
             </div>
         </div>
 
