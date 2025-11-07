@@ -82,6 +82,10 @@ class AccountManager {
             'id' => $id,
             'name' => $name,
             'account_id' => $accountId,
+            'account_status' => 1,
+            'currency' => 'USD',
+            'timezone_name' => '',
+            'business_name' => '',
             'active' => empty($accounts)
         ];
         

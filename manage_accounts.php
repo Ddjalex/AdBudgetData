@@ -4,36 +4,31 @@ ini_set('display_errors', 1);
 ini_set('max_execution_time', 120);
 
 require_once 'config.php';
-require_once 'api.php';
 require_once 'account_manager.php';
 
 $accountManager = new AccountManager();
 $message = null;
 $messageType = 'success';
-$discoveryError = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
-            case 'discover':
-                try {
-                    $api = new FacebookAdsAPI();
-                    $result = $api->discoverAdAccounts();
-                    
-                    if (isset($result['error'])) {
-                        $discoveryError = $result['error'];
-                        $messageType = 'error';
-                    } elseif (isset($result['data'])) {
-                        $syncResult = $accountManager->syncDiscoveredAccounts($result['data']);
-                        $message = "Successfully discovered and synced {$syncResult['count']} Ad Account(s)!";
+            case 'add_account':
+                $name = trim($_POST['account_name'] ?? '');
+                $accountId = trim($_POST['account_id'] ?? '');
+                
+                if (empty($name) || empty($accountId)) {
+                    $message = 'Both Account Name and Account ID are required.';
+                    $messageType = 'error';
+                } else {
+                    $result = $accountManager->addAccount($name, $accountId);
+                    if ($result['success']) {
+                        $message = 'Ad Account added successfully!';
                         $messageType = 'success';
                     } else {
-                        $message = 'No Ad Accounts found for this access token.';
-                        $messageType = 'warning';
+                        $message = $result['message'];
+                        $messageType = 'error';
                     }
-                } catch (Exception $e) {
-                    $discoveryError = 'Error: ' . $e->getMessage();
-                    $messageType = 'error';
                 }
                 break;
                 
@@ -44,6 +39,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($result['success']) {
                         header('Location: index.php');
                         exit;
+                    } else {
+                        $message = 'Failed to set active account.';
+                        $messageType = 'error';
+                    }
+                }
+                break;
+                
+            case 'delete_account':
+                $id = $_POST['account_id'] ?? '';
+                if (!empty($id)) {
+                    $result = $accountManager->deleteAccount($id);
+                    if ($result['success']) {
+                        $message = 'Account removed successfully!';
+                        $messageType = 'success';
+                    } else {
+                        $message = 'Failed to remove account.';
+                        $messageType = 'error';
                     }
                 }
                 break;
@@ -52,35 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $accounts = $accountManager->getAccounts();
-
-function getAccountStatusBadge($status) {
-    $statusLabels = [
-        1 => 'Active',
-        2 => 'Disabled',
-        3 => 'Unsettled',
-        7 => 'Pending Review',
-        8 => 'Pending Closure',
-        9 => 'Closed',
-        100 => 'Pending Risk Review',
-        101 => 'In Grace Period'
-    ];
-    
-    $statusColors = [
-        1 => '#28a745',
-        2 => '#dc3545',
-        3 => '#ffc107',
-        7 => '#17a2b8',
-        8 => '#dc3545',
-        9 => '#6c757d',
-        100 => '#ffc107',
-        101 => '#ffc107'
-    ];
-    
-    $label = $statusLabels[$status] ?? 'Unknown';
-    $color = $statusColors[$status] ?? '#6c757d';
-    
-    return "<span style='background: {$color}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;'>{$label}</span>";
-}
 
 ?>
 <!DOCTYPE html>
@@ -91,6 +74,54 @@ function getAccountStatusBadge($status) {
     <title>Manage Ad Accounts - Facebook Ads Budget Tracker</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1c1e21;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #65676b;
+            font-size: 12px;
+        }
+        .btn-primary {
+            background: #1877f2;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background: #166fe5;
+        }
         .accounts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -116,11 +147,6 @@ function getAccountStatusBadge($status) {
             color: #65676b;
             font-size: 14px;
             margin: 8px 0;
-        }
-        .account-card .account-info {
-            color: #65676b;
-            font-size: 13px;
-            margin: 6px 0;
         }
         .account-card .badge {
             display: inline-block;
@@ -151,34 +177,15 @@ function getAccountStatusBadge($status) {
             background: #1877f2;
             color: white;
         }
-        .btn-discover {
-            background: #42b72a;
+        .btn-activate:hover {
+            background: #166fe5;
+        }
+        .btn-delete {
+            background: #dc3545;
             color: white;
-            padding: 14px 28px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
         }
-        .btn-discover:hover {
-            background: #36a420;
-        }
-        .discovery-section {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .discovery-section p {
-            color: #65676b;
-            margin: 15px 0;
-            font-size: 15px;
+        .btn-delete:hover {
+            background: #c82333;
         }
         .message {
             padding: 15px 20px;
@@ -194,11 +201,6 @@ function getAccountStatusBadge($status) {
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
-        }
-        .message.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
         }
         .info-box {
             background: #e7f3ff;
@@ -226,7 +228,7 @@ function getAccountStatusBadge($status) {
     <div class="container">
         <div class="header">
             <h1>Manage Ad Accounts</h1>
-            <p>Automatically discover and switch between your Facebook Ad Accounts</p>
+            <p>Add and manage multiple Facebook Ad Accounts</p>
             <a href="index.php" style="position: absolute; top: 30px; right: 30px; background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">← Dashboard</a>
         </div>
 
@@ -236,41 +238,42 @@ function getAccountStatusBadge($status) {
             </div>
         <?php endif; ?>
 
-        <?php if ($discoveryError): ?>
-            <div class="message error">
-                <strong>Discovery Error:</strong> <?php echo htmlspecialchars($discoveryError); ?>
-            </div>
-        <?php endif; ?>
-
         <div class="info-box">
-            <h3>How Auto-Discovery Works</h3>
+            <h3>How to Find Your Ad Account ID</h3>
             <ul>
-                <li>Click the "Discover Ad Accounts" button to automatically fetch all Ad Accounts linked to your access token</li>
-                <li>The system will find all accounts you have permission to access</li>
-                <li>Your current active account selection will be preserved during discovery</li>
-                <li>Account status, currency, and timezone information will be automatically retrieved</li>
+                <li>Go to <a href="https://business.facebook.com/settings/ad-accounts" target="_blank">Facebook Business Settings</a></li>
+                <li>Select the Ad Account you want to track</li>
+                <li>The Account ID will be displayed in the format "1234567890" (numbers only)</li>
+                <li>Enter this ID in the form below along with a friendly name</li>
             </ul>
         </div>
 
-        <div class="discovery-section">
-            <h2 style="margin-top: 0;">Auto-Discover Your Ad Accounts</h2>
-            <p>Click the button below to automatically discover all Ad Accounts associated with your Facebook access token</p>
+        <div class="form-container">
+            <h2 style="margin-top: 0;">Add New Ad Account</h2>
             <form method="POST">
-                <input type="hidden" name="action" value="discover">
-                <button type="submit" class="btn-discover">
-                    🔍 Discover Ad Accounts
-                </button>
+                <input type="hidden" name="action" value="add_account">
+                
+                <div class="form-group">
+                    <label for="account_name">Account Name</label>
+                    <input type="text" id="account_name" name="account_name" placeholder="e.g., My Business Account" required>
+                    <small>A friendly name to identify this account</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="account_id">Ad Account ID</label>
+                    <input type="text" id="account_id" name="account_id" placeholder="e.g., 1234567890" required>
+                    <small>Your Facebook Ad Account ID (numbers only, the "act_" prefix will be added automatically)</small>
+                </div>
+
+                <button type="submit" class="btn-primary">Add Account</button>
             </form>
-            <p style="font-size: 13px; color: #8a8d91; margin-top: 20px;">
-                This will fetch all Ad Accounts you have access to via your configured Access Token
-            </p>
         </div>
 
         <h2>Your Ad Accounts</h2>
         
         <?php if (empty($accounts)): ?>
             <div class="alert alert-warning">
-                No ad accounts discovered yet. Click "Discover Ad Accounts" above to automatically find your accounts.
+                No ad accounts added yet. Use the form above to add your first account.
             </div>
         <?php else: ?>
             <div class="accounts-grid">
@@ -286,38 +289,20 @@ function getAccountStatusBadge($status) {
                             <strong>Account ID:</strong> <?php echo htmlspecialchars($account['account_id']); ?>
                         </div>
                         
-                        <div class="account-info">
-                            <strong>Status:</strong> <?php echo getAccountStatusBadge($account['account_status']); ?>
-                        </div>
-                        
-                        <?php if (!empty($account['currency'])): ?>
-                            <div class="account-info">
-                                <strong>Currency:</strong> <?php echo htmlspecialchars($account['currency']); ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($account['business_name'])): ?>
-                            <div class="account-info">
-                                <strong>Business:</strong> <?php echo htmlspecialchars($account['business_name']); ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($account['timezone_name'])): ?>
-                            <div class="account-info">
-                                <strong>Timezone:</strong> <?php echo htmlspecialchars($account['timezone_name']); ?>
-                            </div>
-                        <?php endif; ?>
-                        
                         <div class="actions">
-                            <?php if (!$account['active'] && $account['account_status'] == 1): ?>
+                            <?php if (!$account['active']): ?>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="action" value="set_active">
                                     <input type="hidden" name="account_id" value="<?php echo htmlspecialchars($account['id']); ?>">
                                     <button type="submit" class="btn-small btn-activate">Set Active</button>
                                 </form>
-                            <?php elseif ($account['account_status'] != 1): ?>
-                                <span style="color: #dc3545; font-size: 12px;">Account cannot be activated (not active status)</span>
                             <?php endif; ?>
+                            
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this account?');">
+                                <input type="hidden" name="action" value="delete_account">
+                                <input type="hidden" name="account_id" value="<?php echo htmlspecialchars($account['id']); ?>">
+                                <button type="submit" class="btn-small btn-delete">Remove</button>
+                            </form>
                         </div>
                     </div>
                 <?php endforeach; ?>
