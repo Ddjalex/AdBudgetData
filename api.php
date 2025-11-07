@@ -227,7 +227,7 @@ class FacebookAdsAPI {
     }
     
     public function getCampaignsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $fields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         
         $filtering = json_encode([
