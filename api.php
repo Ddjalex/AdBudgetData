@@ -254,7 +254,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdSetsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,campaign_id,daily_budget,lifetime_budget,created_time';
+        $fields = 'id,name,status,effective_status,campaign_id,daily_budget,lifetime_budget,budget_remaining,created_time,start_time,end_time';
         $endpoint = "/{$this->adAccountId}/adsets";
         
         $filtering = json_encode([
@@ -281,7 +281,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,adset_id,creative{id,name},created_time';
+        $fields = 'id,name,status,effective_status,adset_id,adset{daily_budget,lifetime_budget,start_time,end_time},creative{id,name},created_time';
         $endpoint = "/{$this->adAccountId}/ads";
         
         $filtering = json_encode([
@@ -305,5 +305,47 @@ class FacebookAdsAPI {
         
         $response = $this->makeRequest($endpoint, $params);
         return isset($response['data']) ? $response['data'] : $response;
+    }
+    
+    public static function calculateTotalAllocatedBudget($entity) {
+        $allocatedBudget = 0;
+        
+        if (isset($entity['lifetime_budget']) && $entity['lifetime_budget'] > 0) {
+            $allocatedBudget = $entity['lifetime_budget'] / 100;
+        } elseif (isset($entity['daily_budget']) && $entity['daily_budget'] > 0) {
+            $dailyBudget = $entity['daily_budget'] / 100;
+            
+            $startTime = isset($entity['start_time']) ? strtotime($entity['start_time']) : null;
+            $endTime = isset($entity['end_time']) ? strtotime($entity['end_time']) : null;
+            
+            if ($startTime && $endTime && $endTime > $startTime) {
+                $durationInSeconds = $endTime - $startTime;
+                $durationInDays = ceil($durationInSeconds / 86400);
+                $allocatedBudget = $dailyBudget * $durationInDays;
+            } elseif ($startTime && !$endTime) {
+                $allocatedBudget = $dailyBudget * 30;
+            } else {
+                $allocatedBudget = $dailyBudget * 30;
+            }
+        } elseif (isset($entity['adset']['lifetime_budget']) && $entity['adset']['lifetime_budget'] > 0) {
+            $allocatedBudget = $entity['adset']['lifetime_budget'] / 100;
+        } elseif (isset($entity['adset']['daily_budget']) && $entity['adset']['daily_budget'] > 0) {
+            $dailyBudget = $entity['adset']['daily_budget'] / 100;
+            
+            $startTime = isset($entity['adset']['start_time']) ? strtotime($entity['adset']['start_time']) : null;
+            $endTime = isset($entity['adset']['end_time']) ? strtotime($entity['adset']['end_time']) : null;
+            
+            if ($startTime && $endTime && $endTime > $startTime) {
+                $durationInSeconds = $endTime - $startTime;
+                $durationInDays = ceil($durationInSeconds / 86400);
+                $allocatedBudget = $dailyBudget * $durationInDays;
+            } elseif ($startTime && !$endTime) {
+                $allocatedBudget = $dailyBudget * 30;
+            } else {
+                $allocatedBudget = $dailyBudget * 30;
+            }
+        }
+        
+        return $allocatedBudget;
     }
 }
