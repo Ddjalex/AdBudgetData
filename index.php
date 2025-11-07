@@ -67,9 +67,9 @@ function getStatusBadge($status) {
         <div class="header">
             <h1>Facebook Ads Budget Tracker</h1>
             <p>Track and analyze your Facebook advertising campaigns, ad sets, and ads in real-time</p>
-            <div style="position: absolute; top: 30px; right: 30px; display: flex; gap: 10px;">
-                <a href="manage_accounts.php" style="background: #42b72a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">📊 Accounts</a>
-                <a href="settings.php" style="background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">⚙ Settings</a>
+            <div style="position: absolute; top: 30px; right: 30px; display: flex; gap: 10px; z-index: 1000;">
+                <a href="manage_accounts.php" style="background: #42b72a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">📊 Accounts</a>
+                <a href="settings.php" style="background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-block;">⚙ Settings</a>
             </div>
         </div>
 
@@ -107,11 +107,22 @@ function getStatusBadge($status) {
                 <strong>Ready to Load Data</strong><br>
                 Click the button below to load your Facebook Ads data from the active account.
                 <br><br>
-                <a href="?load_data=1" style="display: inline-block; background: #1877f2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                <a href="?load_data=1" id="loadDataBtn" onclick="showLoading()" style="display: inline-block; background: #1877f2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; cursor: pointer;">
                     📊 Load Facebook Ads Data
                 </a>
                 <span style="margin-left: 15px; color: #0c5460; font-size: 14px;">(This may take 30-60 seconds)</span>
+                <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                    <strong>⏳ Loading data from Facebook...</strong><br>
+                    Please wait, this may take up to 60 seconds. Do not refresh the page.
+                </div>
             </div>
+            <script>
+            function showLoading() {
+                document.getElementById('loadDataBtn').style.opacity = '0.5';
+                document.getElementById('loadDataBtn').style.pointerEvents = 'none';
+                document.getElementById('loadingMessage').style.display = 'block';
+            }
+            </script>
         <?php endif; ?>
 
         <?php if ($errorMessage): ?>
