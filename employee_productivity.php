@@ -65,11 +65,6 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($ads['error'])) {
                     $productivityData[$accountId]['ads_created'] = count($ads);
-                    
-                    foreach ($ads as $ad) {
-                        $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($ad);
-                        $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
-                    }
                 }
             }
             
