@@ -1,0 +1,35 @@
+**Project Finalization: Comprehensive Budget Calculation and UI Synchronization**
+
+**Objective:**
+Ensure the "Employee Productivity Report" dashboard is fully functional, accurately calculating the **Total Allocated Budget** using the duration-based logic and providing a complete set of time-based filtering options, all while focusing on entities created within the specified period.
+
+**CRITICAL FIXES & IMPLEMENTATIONS:**
+
+1.  **Correct Budget Calculation (The $0.00 Fix):**
+    * **Data Source:** The budget is set at the **Campaign** or **Ad Set** level. The PHP logic must fetch and process budget data from these levels, then aggregate it back to the Ad Account/Employee report row.
+    * **Required Fields (Campaign/Ad Set API Calls):** The API must fetch: **`daily_budget`**, **`lifetime_budget`**, **`start_time`**, and **`end_time`**.
+    * **PHP Calculation Logic:**
+        * **IF `lifetime_budget` is set:** Use this value directly.
+        * **IF `daily_budget` is set:** Calculate the number of days (Duration) between `start_time` and `end_time` (inclusive). **Allocated Budget = `daily_budget` $\times$ Duration (in days)**.
+        * **Currency Conversion:** Divide the final aggregated budget by **100** before displaying it (as Facebook API returns values in cents).
+
+2.  **Complete Time Filtering Options (UI and Logic Synchronization):**
+    * **UI Requirement:** Ensure the "Time Period" dropdown contains and works correctly for:
+        * **Today**
+        * **Yesterday**
+        * **This Week**
+    * **Calendar Input:** Implement two simple calendar/date input fields (`start_date` and `end_date`) to enable users to select a **Specific Date Range**.
+    * **PHP Synchronization:** The PHP script must prioritize the calendar input fields if they are filled. If not, it falls back to calculating the `since` and `until` dates based on the "Time Period" dropdown selection (Today, Yesterday, etc.).
+
+3.  **Data Consistency (Active & Created):**
+    * Maintain the logic to only count and calculate budgets for entities whose:
+        * **`created_time`** falls within the selected time range.
+        * **`effective_status`** is currently **'ACTIVE'**.
+
+**Replit Agent Tasks:**
+
+1.  **UI/HTML Update:** Add the two calendar input fields (`<input type="date">`) next to the "Time Period" dropdown.
+2.  **PHP Date Logic:** Revise the PHP function that determines the API's `time_range` parameters (`since` and `until`) to correctly handle and parse input from **both** the dropdown **and** the new date range selectors.
+3.  **Budget Implementation:** Provide the finalized PHP code that iterates through Campaign/Ad Set data, applies the duration-based budget calculation logic, and fixes the **$0.00** issue by dividing the total aggregated budget by 100.
+
+**Start by presenting the updated HTML/CSS structure that includes the new calendar filter inputs and the revised PHP function for calculating the allocated budget.**

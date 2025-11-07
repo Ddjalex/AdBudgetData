@@ -27,13 +27,14 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 - **Responsive Design**: Optimized for desktop and mobile.
 
 ### Technical Implementation
-- **Backend**: PHP 8.4
-- **Frontend**: HTML5, CSS3
-- **API Integration**: Custom PHP classes (`FacebookAdsAPI` for API interaction, `AccountManager` for account handling) to interface with Facebook Marketing API v21.0.
+- **Backend**: PHP 8.2.23
+- **Frontend**: HTML5, CSS3, JavaScript
+- **API Integration**: Custom PHP classes (`FacebookAdsAPI` for API interaction, `AccountManager` for account handling) to interface with Facebook Marketing API v21.0. API timeout set to 30 seconds (connection timeout: 10 seconds) for reliable data fetching.
 - **Data Retrieval**: Comprehensive methods to fetch account-level, campaign-level, ad set-level, and ad-level data, including insights (spend, impressions, clicks, CPC, CPM, CTR). Enhanced API calls retrieve budget-critical fields (start_time, end_time, effective_status, budget_remaining) for accurate allocation tracking. All entity types fetch `effective_status` field for filtering.
 - **Budget Calculation**: Accurate duration-based allocated budget calculation using `calculateTotalAllocatedBudget()` function. Prioritizes lifetime_budget when available; otherwise calculates daily_budget × duration (days between start_time and end_time). For ongoing campaigns without end_time, calculates from start_time to current time. Includes robust type handling with floatval(), ensures minimum 1-day duration, properly converts from cents to USD (÷100), and rounds to 2 decimal places. Prevents double-counting by only summing Ad Set budgets (Ads inherit their parent Ad Set's budget).
 - **Active Status Filtering**: Employee Productivity report filters all entities (Campaigns, Ad Sets, Ads) to only include those with `effective_status === 'ACTIVE'`. This ensures counts and budget calculations reflect only currently active advertising efforts, excluding paused or deleted entities.
-- **Security**: `.gitignore` configured to exclude `config.php` and `accounts.json` for credential security.
+- **Time Filtering**: Complete time period filtering with Today, Yesterday, This Week options, plus custom date range selection using calendar inputs. Time filters work with created_time field to show entities created within the selected period.
+- **Security**: Credentials managed through Replit Secrets (FB_APP_ID, FB_APP_SECRET, FB_ACCESS_TOKEN). `.gitignore` configured to exclude `config.php` and `accounts.json` for credential security.
 
 ## External Dependencies
 - **API**: Facebook Marketing API v21.0
