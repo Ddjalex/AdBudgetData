@@ -1,0 +1,30 @@
+**Project Finalization: Total Allocated Budget Calculation Fix**
+
+**Current Status:**
+The "Employee Productivity Report" successfully filters entities by `created_time` and `effective_status='ACTIVE'`, and accurately groups data by Ad Account ID. However, the **Total Allocated Budget** column remains stuck at **$0.00**. This indicates that the advanced budget calculation logic previously requested is not yet implemented or is failing.
+
+**CRITICAL FIX: Budget Calculation Implementation:**
+The PHP code must be revised to correctly calculate the Total Allocated Budget for all created and Active Ad Sets/Ads by implementing the following logic:
+
+1.  **Retrieve Necessary Data:** Ensure the API calls for Ad Sets and Ads are fetching the required fields: **`daily_budget`**, **`lifetime_budget`**, **`start_time`**, and **`end_time`**.
+
+2.  **PHP Calculation Logic (Focus on `calculateTotalAllocatedBudget` function):**
+    * For each Active entity (Ad Set or Ad) created in the time period, apply the following calculation:
+        * **A. Lifetime Budget:** If the entity has a **`lifetime_budget`** value, use that value directly.
+        * **B. Daily Budget Calculation:** If the entity has a **`daily_budget`** value:
+            * **Calculate Duration:** Determine the number of days between the **`start_time`** and the **`end_time`** (inclusive). Ensure robust handling for date differences in PHP, considering edge cases where the `end_time` might be missing (e.g., set a large default duration if `end_time` is null, or skip calculation for safety).
+            * **Calculate Total:** Total Allocated Budget for this entity = `daily_budget` $\times$ Duration (in days).
+
+3.  **Currency Conversion:**
+    * **Crucial:** All budget figures fetched from the Facebook API are typically in **cents** (smallest currency unit). The PHP code must divide the final calculated budget by **100** before aggregating the totals and displaying the result in the report table (e.g., $33900 becomes $339.00).
+
+4.  **Aggregation:** The calculated totals from all Active, created entities must be correctly aggregated and stored against the respective **Ad Account ID**.
+
+**Replit Agent Task:**
+
+Provide the **updated PHP function** responsible for iterating through the Ad Set/Ad data and calculating the final `Total Allocated Budget`. The solution must specifically demonstrate:
+* How the `start_time` and `end_time` strings are used to calculate the duration (in days).
+* The application of the duration multiplication logic for `daily_budget`.
+* The division by 100 for currency conversion before the final sum is displayed.
+
+**Start by presenting the revised PHP code block for the budget processing loop.**

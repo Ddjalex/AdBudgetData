@@ -56,7 +56,7 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
-                if (!isset($adsets['error'])) {
+                if (!isset($adsets['error']) && is_array($adsets)) {
                     $activeAdsets = array_filter($adsets, function($adset) {
                         return isset($adset['effective_status']) && $adset['effective_status'] === 'ACTIVE';
                     });
@@ -64,7 +64,9 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                     
                     foreach ($activeAdsets as $adset) {
                         $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset);
-                        $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
+                        if ($allocatedBudget > 0) {
+                            $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
+                        }
                     }
                 }
                 

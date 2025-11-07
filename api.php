@@ -310,42 +310,64 @@ class FacebookAdsAPI {
     public static function calculateTotalAllocatedBudget($entity) {
         $allocatedBudget = 0;
         
-        if (isset($entity['lifetime_budget']) && $entity['lifetime_budget'] > 0) {
-            $allocatedBudget = $entity['lifetime_budget'] / 100;
-        } elseif (isset($entity['daily_budget']) && $entity['daily_budget'] > 0) {
-            $dailyBudget = $entity['daily_budget'] / 100;
+        $lifetimeBudget = isset($entity['lifetime_budget']) ? floatval($entity['lifetime_budget']) : 0;
+        $dailyBudget = isset($entity['daily_budget']) ? floatval($entity['daily_budget']) : 0;
+        
+        if ($lifetimeBudget > 0) {
+            $allocatedBudget = $lifetimeBudget / 100;
+        } elseif ($dailyBudget > 0) {
+            $dailyBudgetUSD = $dailyBudget / 100;
             
             $startTime = isset($entity['start_time']) ? strtotime($entity['start_time']) : null;
             $endTime = isset($entity['end_time']) ? strtotime($entity['end_time']) : null;
             
             if ($startTime && $endTime && $endTime > $startTime) {
                 $durationInSeconds = $endTime - $startTime;
-                $durationInDays = ceil($durationInSeconds / 86400);
-                $allocatedBudget = $dailyBudget * $durationInDays;
-            } elseif ($startTime && !$endTime) {
-                $allocatedBudget = $dailyBudget * 30;
+                $durationInDays = max(1, ceil($durationInSeconds / 86400));
+                $allocatedBudget = $dailyBudgetUSD * $durationInDays;
+            } elseif ($startTime) {
+                $currentTime = time();
+                if ($currentTime > $startTime) {
+                    $durationInSeconds = $currentTime - $startTime;
+                    $durationInDays = max(1, ceil($durationInSeconds / 86400));
+                    $allocatedBudget = $dailyBudgetUSD * $durationInDays;
+                } else {
+                    $allocatedBudget = $dailyBudgetUSD * 30;
+                }
             } else {
-                $allocatedBudget = $dailyBudget * 30;
+                $allocatedBudget = $dailyBudgetUSD * 30;
             }
-        } elseif (isset($entity['adset']['lifetime_budget']) && $entity['adset']['lifetime_budget'] > 0) {
-            $allocatedBudget = $entity['adset']['lifetime_budget'] / 100;
-        } elseif (isset($entity['adset']['daily_budget']) && $entity['adset']['daily_budget'] > 0) {
-            $dailyBudget = $entity['adset']['daily_budget'] / 100;
+        } elseif (isset($entity['adset'])) {
+            $adsetLifetimeBudget = isset($entity['adset']['lifetime_budget']) ? floatval($entity['adset']['lifetime_budget']) : 0;
+            $adsetDailyBudget = isset($entity['adset']['daily_budget']) ? floatval($entity['adset']['daily_budget']) : 0;
             
-            $startTime = isset($entity['adset']['start_time']) ? strtotime($entity['adset']['start_time']) : null;
-            $endTime = isset($entity['adset']['end_time']) ? strtotime($entity['adset']['end_time']) : null;
-            
-            if ($startTime && $endTime && $endTime > $startTime) {
-                $durationInSeconds = $endTime - $startTime;
-                $durationInDays = ceil($durationInSeconds / 86400);
-                $allocatedBudget = $dailyBudget * $durationInDays;
-            } elseif ($startTime && !$endTime) {
-                $allocatedBudget = $dailyBudget * 30;
-            } else {
-                $allocatedBudget = $dailyBudget * 30;
+            if ($adsetLifetimeBudget > 0) {
+                $allocatedBudget = $adsetLifetimeBudget / 100;
+            } elseif ($adsetDailyBudget > 0) {
+                $dailyBudgetUSD = $adsetDailyBudget / 100;
+                
+                $startTime = isset($entity['adset']['start_time']) ? strtotime($entity['adset']['start_time']) : null;
+                $endTime = isset($entity['adset']['end_time']) ? strtotime($entity['adset']['end_time']) : null;
+                
+                if ($startTime && $endTime && $endTime > $startTime) {
+                    $durationInSeconds = $endTime - $startTime;
+                    $durationInDays = max(1, ceil($durationInSeconds / 86400));
+                    $allocatedBudget = $dailyBudgetUSD * $durationInDays;
+                } elseif ($startTime) {
+                    $currentTime = time();
+                    if ($currentTime > $startTime) {
+                        $durationInSeconds = $currentTime - $startTime;
+                        $durationInDays = max(1, ceil($durationInSeconds / 86400));
+                        $allocatedBudget = $dailyBudgetUSD * $durationInDays;
+                    } else {
+                        $allocatedBudget = $dailyBudgetUSD * 30;
+                    }
+                } else {
+                    $allocatedBudget = $dailyBudgetUSD * 30;
+                }
             }
         }
         
-        return $allocatedBudget;
+        return round($allocatedBudget, 2);
     }
 }
