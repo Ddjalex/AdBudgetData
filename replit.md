@@ -5,15 +5,18 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 
 ## Project Structure
 ```
-├── index.php              # Main dashboard with multi-account support
-├── manage_accounts.php    # Ad Account manual entry and management interface
-├── settings.php           # API credentials configuration
-├── config.php             # API configuration and credentials
-├── api.php               # Facebook Marketing API integration class
-├── account_manager.php   # Account management logic
-├── accounts.json         # Multi-account storage (auto-generated)
-├── style.css             # Styling for the dashboard
-└── replit.md             # Project documentation
+├── index.php                  # Main dashboard with multi-account support
+├── employee_productivity.php  # Employee productivity and creation metrics tracker
+├── manage_accounts.php        # Ad Account manual entry and management interface
+├── settings.php              # API credentials configuration
+├── config.php                # API configuration and credentials
+├── api.php                   # Facebook Marketing API integration class
+├── account_manager.php       # Account management logic
+├── employee_config.php       # Employee mapping configuration
+├── time_filter.php           # Time range filtering helper functions
+├── accounts.json             # Multi-account storage (auto-generated)
+├── style.css                 # Styling for the dashboard
+└── replit.md                 # Project documentation
 ```
 
 ## Key Features
@@ -62,8 +65,18 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 - **Smart Filtering**: Custom date ranges only apply to lifetime/total metrics, while today's metrics always show current day data
 - **Flexible Analysis**: Leave dates empty to see all-time data, or specify a range for focused analysis
 
+### Employee Productivity Tracker
+- **NEW FEATURE**: Track employee creation metrics and allocated budgets
+- **Employee Mapping**: Configure which employee manages which ad account
+- **Time-Based Filtering**: Filter by Today, Yesterday, This Week, or Custom Date Range
+- **Creation Metrics**: See how many Campaigns, Ad Sets, and Ads each employee created
+- **Allocated Budget Tracking**: View total budget allocated (not spent) by each employee
+- **Comprehensive Reporting**: Detailed table showing productivity metrics per employee
+- **Multi-Account Support**: Aggregates data across multiple ad accounts per employee
+
 ### User Interface
 - **Tabbed Navigation**: Easy switching between Campaigns, Ad Sets, and Ads views
+- **Employee Productivity Dashboard**: Dedicated page for tracking employee creation metrics
 - **Real-time Data**: Fetches live data from Facebook Marketing API
 - **Clean Dashboard**: Professional Facebook Ads Manager-style layout
 - **Responsive Design**: Works on desktop and mobile devices
@@ -168,6 +181,18 @@ Handles multi-account storage and management:
 - Manual account entry for full control and simplicity
 
 ## Recent Changes
+- **2025-11-07**: Employee Productivity and Allocated Budget Tracker Feature
+  - **CREATED** new employee productivity tracking page (employee_productivity.php)
+  - **IMPLEMENTED** employee mapping system to track who created which entities
+  - **ADDED** time-based filtering: Today, Yesterday, This Week, Custom Date Range
+  - **CREATED** new API methods: getCampaignsCreatedInRange, getAdSetsCreatedInRange, getAdsCreatedInRange
+  - **FOCUSED** on creation metrics and allocated budgets (not spend)
+  - **IMPLEMENTED** comprehensive reporting table showing employee productivity
+  - **ADDED** navigation link from main dashboard to Employee Productivity page
+  - **CREATED** employee_config.php for employee-to-account mapping
+  - **CREATED** time_filter.php for date range calculation helpers
+  - **FIXED** security issue preventing placeholder account IDs from displaying in UI
+
 - **2025-11-07**: Advanced Date Range Filtering & Enhanced Campaign Tracking
   - **IMPLEMENTED** optional date range filtering for insights data retrieval
   - **ADDED** Start Date and End Date input fields to the data loading form
