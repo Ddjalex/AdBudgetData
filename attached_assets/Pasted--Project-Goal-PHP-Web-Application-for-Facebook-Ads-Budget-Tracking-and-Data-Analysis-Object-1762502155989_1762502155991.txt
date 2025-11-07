@@ -1,0 +1,32 @@
+**Project Goal: PHP Web Application for Facebook Ads Budget Tracking and Data Analysis**
+
+**Objective:**
+Develop a simple, yet robust, web application using **PHP** for the backend and **HTML/CSS** for the frontend. The primary purpose is to track and analyze daily and total budgets/spending for various Facebook advertising campaigns managed for clients. This system will integrate with the **Facebook Marketing API** to fetch relevant performance and budget data.
+
+**Key Requirements & Features:**
+
+1.  **Technology Stack:**
+    * **Backend:** Pure **PHP** (No complex frameworks initially, focus on functionality).
+    * **Frontend:** **HTML5** and **CSS3** (Focus on clean, easily scannable data presentation).
+    * **Data Source:** **Facebook Marketing API**.
+
+2.  **API Integration & Data Structure:**
+    * The application must connect securely to the Facebook Marketing API (using necessary access tokens and App ID/Secret).
+    * It must fetch and present data categorized clearly as follows:
+        * **Campaign Level Data:** Overall campaign budget, total spent, status.
+        * **Ad Set Level Data:** Budget allocated to the Ad Set, amount spent today, performance metrics (if possible, e.g., impressions, clicks).
+        * **Ad Level Data:** Daily spend, link to the ad creative/ID.
+
+3.  **Core Functionality (Data Analysis & Tracking):**
+    * **Daily Budget Tracking:** A feature to clearly display the amount spent **"Today"** for each individual Ad Set/Ad.
+    * **Total Budget Tracking:** Display the accumulated total budget spent for each Campaign/Ad Set against the set limit.
+    * **Categorized View:** The data presentation must be easily filterable or navigable by the three categories: Campaign > Ad Set > Ad.
+    * **Simple Reporting Table:** Present the fetched data in a clean, tabular format (HTML Table) for quick review.
+
+**Replit Agent Tasks:**
+
+1.  **Initial Setup:** Create the basic PHP/HTML/CSS structure for the project (e.g., `index.php`, `style.css`).
+2.  **PHP Logic for API Connection:** Provide the fundamental PHP code structure needed to make a secure request to the Facebook Marketing API (focusing on fetching data from the `/campaigns` or `/adsets` endpoints with relevant fields like `budget`, `spend`, `id`, `name`).
+3.  **HTML/CSS Template:** Create a basic HTML template to display the categorized data in a clear table format, including placeholder data for demonstration purposes.
+
+**Start by providing the basic file structure and the initial PHP code to handle API calls (using `curl` or a simple HTTP client structure, noting where the developer needs to insert the Access Token and API URL).**
