@@ -1,0 +1,39 @@
+**FINAL PHASE: Advanced Filtering, Date Tracking, and Table Structure Correction**
+
+**Objective:**
+Enhance the existing Campaign Overview dashboard by adding essential filtering capabilities and crucial date/time metrics to provide comprehensive reporting. Address the structural error regarding separate Campaign/Ad Set displays.
+
+**I. Data Retrieval Enhancement (API Call Requirements):**
+
+1.  **Date/Time Fields:** The API calls fetching Campaign data must now include the following fields:
+    * `start_time`: The date and time the campaign started.
+    * `stop_time`: The date and time the campaign is set to end (will be N/A for continuous campaigns).
+2.  **Budget Tracking Correction:** Ensure the `spend` field is correctly calculated as **Total Spent** and that **Budget Remaining** is derived from `lifetime_budget - spend`.
+
+**II. Frontend & Filtering Requirements (index.php/HTML/CSS):**
+
+1.  **Date Range Filter Implementation:**
+    * Add a functional **Date Range Selector** (e.g., two input fields for `Start Date` and `End Date`) to the top of the dashboard.
+    * **Task:** Implement PHP logic to apply this date range when requesting campaign **Insights** from the Facebook API. *Note: Data fetching for metrics like Spend and Impressions must use the selected date range for accurate filtering.*
+
+2.  **Table Metrics Addition (Must-Have Columns):**
+    * The Campaign Overview table must be updated to include the following columns based on the newly fetched data:
+        * **START DATE** (`start_time` formatted simply as a date).
+        * **END DATE** (`stop_time` or 'Continuous' if N/A).
+        * **Today's Unallocated Budget:** (This metric requires calculating the difference between the **Daily Budget** and the **Spend Today** for active campaigns). *If not directly available, display calculated remaining daily budget.*
+
+3.  **Campaign/Ad Set Separation (Structural Correction):**
+    * **Problem:** The current display may incorrectly mix Campaigns and Ad Sets in the main "Campaigns Overview" table.
+    * **Correction:** Use the Tabs structure provided (Campaigns, Ad Sets, Ads) to **correctly separate data.**
+        * **'Campaigns' Tab:** Only show the top-level Campaign data (as seen in the screenshots).
+        * **'Ad Sets' Tab:** When clicked, fetch and display the Ad Sets under the currently Active Account/Selected Campaign (This requires a separate API call to `/campaigns/<ID>/adsets`).
+        * **'Ads' Tab:** When clicked, fetch and display the Ads data (requiring a call to `/adsets/<ID>/ads`).
+
+**Replit Agent Tasks:**
+
+1.  **PHP Filtering Logic:** Update `api.php` to accept `date_since` and `date_until` parameters and apply them to the Insights API calls to retrieve time-specific spend data.
+2.  **HTML Filter UI:** Implement the HTML/CSS for the date filter inputs and the submission logic to refresh the dashboard data based on the selected range.
+3.  **Table Rendering:** Modify `index.php` to dynamically populate the new **START DATE** and **END DATE** columns using the `start_time` and `stop_time` fields.
+4.  **Tab Logic Structure:** Provide the initial HTML/PHP structure for the three tabs (Campaigns, Ad Sets, Ads) to enable the drill-down view.
+
+**Start by providing the updated HTML for `index.php` showing the Date Range Filter inputs and the modified table headers with the new date/budget columns.**

@@ -51,7 +51,7 @@ class FacebookAdsAPI {
     }
     
     public function getCampaigns() {
-        $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time';
+        $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         $params = [
             'fields' => $fields,
@@ -61,13 +61,21 @@ class FacebookAdsAPI {
         return $this->makeRequest($endpoint, $params);
     }
     
-    public function getCampaignInsights($campaignId, $datePreset = 'lifetime') {
+    public function getCampaignInsights($campaignId, $datePreset = 'lifetime', $dateSince = null, $dateUntil = null) {
         $fields = 'spend,impressions,clicks,cpc,cpm,ctr';
         $endpoint = "/{$campaignId}/insights";
         $params = [
-            'fields' => $fields,
-            'date_preset' => $datePreset
+            'fields' => $fields
         ];
+        
+        if ($dateSince && $dateUntil) {
+            $params['time_range'] = json_encode([
+                'since' => $dateSince,
+                'until' => $dateUntil
+            ]);
+        } else {
+            $params['date_preset'] = $datePreset;
+        }
         
         return $this->makeRequest($endpoint, $params);
     }
@@ -106,29 +114,45 @@ class FacebookAdsAPI {
         return $this->makeRequest($endpoint, $params);
     }
     
-    public function getAdInsights($adId, $datePreset = 'today') {
+    public function getAdInsights($adId, $datePreset = 'today', $dateSince = null, $dateUntil = null) {
         $fields = 'spend,impressions,clicks,cpc,cpm,ctr';
         $endpoint = "/{$adId}/insights";
         $params = [
-            'fields' => $fields,
-            'date_preset' => $datePreset
+            'fields' => $fields
         ];
+        
+        if ($dateSince && $dateUntil) {
+            $params['time_range'] = json_encode([
+                'since' => $dateSince,
+                'until' => $dateUntil
+            ]);
+        } else {
+            $params['date_preset'] = $datePreset;
+        }
         
         return $this->makeRequest($endpoint, $params);
     }
     
-    public function getAdSetInsights($adSetId, $datePreset = 'today') {
+    public function getAdSetInsights($adSetId, $datePreset = 'today', $dateSince = null, $dateUntil = null) {
         $fields = 'spend,impressions,clicks,cpc,cpm,ctr';
         $endpoint = "/{$adSetId}/insights";
         $params = [
-            'fields' => $fields,
-            'date_preset' => $datePreset
+            'fields' => $fields
         ];
+        
+        if ($dateSince && $dateUntil) {
+            $params['time_range'] = json_encode([
+                'since' => $dateSince,
+                'until' => $dateUntil
+            ]);
+        } else {
+            $params['date_preset'] = $datePreset;
+        }
         
         return $this->makeRequest($endpoint, $params);
     }
     
-    public function getAllData() {
+    public function getAllData($dateSince = null, $dateUntil = null) {
         $campaigns = $this->getCampaigns();
         
         if (isset($campaigns['error'])) {
@@ -150,12 +174,12 @@ class FacebookAdsAPI {
             foreach ($campaigns['data'] as $campaign) {
                 $data['campaigns'][] = $campaign;
                 
-                $campaignLifetimeInsights = $this->getCampaignInsights($campaign['id'], 'lifetime');
+                $campaignLifetimeInsights = $this->getCampaignInsights($campaign['id'], 'lifetime', $dateSince, $dateUntil);
                 if (isset($campaignLifetimeInsights['data'][0])) {
                     $data['insights']['campaign'][$campaign['id']]['lifetime'] = $campaignLifetimeInsights['data'][0];
                 }
                 
-                $campaignTodayInsights = $this->getCampaignInsights($campaign['id'], 'today');
+                $campaignTodayInsights = $this->getCampaignInsights($campaign['id'], 'today', $dateSince, $dateUntil);
                 if (isset($campaignTodayInsights['data'][0])) {
                     $data['insights']['campaign'][$campaign['id']]['today'] = $campaignTodayInsights['data'][0];
                 }
@@ -166,12 +190,12 @@ class FacebookAdsAPI {
                         $adset['campaign_name'] = $campaign['name'];
                         $data['adsets'][] = $adset;
                         
-                        $todayInsights = $this->getAdSetInsights($adset['id'], 'today');
+                        $todayInsights = $this->getAdSetInsights($adset['id'], 'today', $dateSince, $dateUntil);
                         if (isset($todayInsights['data'][0])) {
                             $data['insights']['adset'][$adset['id']]['today'] = $todayInsights['data'][0];
                         }
                         
-                        $lifetimeInsights = $this->getAdSetInsights($adset['id'], 'lifetime');
+                        $lifetimeInsights = $this->getAdSetInsights($adset['id'], 'lifetime', $dateSince, $dateUntil);
                         if (isset($lifetimeInsights['data'][0])) {
                             $data['insights']['adset'][$adset['id']]['lifetime'] = $lifetimeInsights['data'][0];
                         }
@@ -183,12 +207,12 @@ class FacebookAdsAPI {
                                 $ad['campaign_name'] = $campaign['name'];
                                 $data['ads'][] = $ad;
                                 
-                                $adTodayInsights = $this->getAdInsights($ad['id'], 'today');
+                                $adTodayInsights = $this->getAdInsights($ad['id'], 'today', $dateSince, $dateUntil);
                                 if (isset($adTodayInsights['data'][0])) {
                                     $data['insights']['ad'][$ad['id']]['today'] = $adTodayInsights['data'][0];
                                 }
                                 
-                                $adLifetimeInsights = $this->getAdInsights($ad['id'], 'lifetime');
+                                $adLifetimeInsights = $this->getAdInsights($ad['id'], 'lifetime', $dateSince, $dateUntil);
                                 if (isset($adLifetimeInsights['data'][0])) {
                                     $data['insights']['ad'][$ad['id']]['lifetime'] = $adLifetimeInsights['data'][0];
                                 }
