@@ -14,6 +14,8 @@ $allAccounts = $accountManager->getAccounts();
 $errorMessage = null;
 $data = null;
 $isConfigured = false;
+$dateSince = $_GET['date_since'] ?? null;
+$dateUntil = $_GET['date_until'] ?? null;
 
 if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
     $isConfigured = true;
@@ -23,7 +25,7 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
         try {
             set_time_limit(90);
             $api = new FacebookAdsAPI($activeAccount['account_id']);
-            $data = $api->getAllData();
+            $data = $api->getAllData($dateSince, $dateUntil);
             
             if (isset($data['error'])) {
                 $errorMessage = $data['error'];
@@ -51,6 +53,18 @@ function formatNumber($number) {
 function getStatusBadge($status) {
     $statusClass = 'status-' . strtolower($status);
     return "<span class='status-badge {$statusClass}'>{$status}</span>";
+}
+
+function formatDate($dateString) {
+    if (empty($dateString)) {
+        return 'N/A';
+    }
+    try {
+        $date = new DateTime($dateString);
+        return $date->format('M d, Y');
+    } catch (Exception $e) {
+        return 'N/A';
+    }
 }
 
 ?>
@@ -105,12 +119,29 @@ function getStatusBadge($status) {
         <?php if ($isConfigured && $data === null && !isset($_GET['load_data'])): ?>
             <div class="alert alert-info" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
                 <strong>Ready to Load Data</strong><br>
-                Click the button below to load your Facebook Ads data from the active account.
+                Load your Facebook Ads data with optional date range filtering.
                 <br><br>
-                <a href="?load_data=1" id="loadDataBtn" onclick="showLoading()" style="display: inline-block; background: #1877f2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; cursor: pointer;">
-                    📊 Load Facebook Ads Data
-                </a>
-                <span style="margin-left: 15px; color: #0c5460; font-size: 14px;">(This may take 30-60 seconds)</span>
+                <form method="GET" style="margin-top: 15px;">
+                    <input type="hidden" name="load_data" value="1">
+                    <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 180px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Start Date (Optional)</label>
+                            <input type="date" name="date_since" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                        </div>
+                        <div style="flex: 1; min-width: 180px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">End Date (Optional)</label>
+                            <input type="date" name="date_until" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <button type="submit" id="loadDataBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
+                                📊 Load Data
+                            </button>
+                        </div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 13px; color: #0c5460;">
+                        Leave dates empty to load all-time data. This may take 30-60 seconds.
+                    </p>
+                </form>
                 <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
                     <strong>⏳ Loading data from Facebook...</strong><br>
                     Please wait, this may take up to 60 seconds. Do not refresh the page.
@@ -270,10 +301,13 @@ function getStatusBadge($status) {
                                     <th>Campaign Name</th>
                                     <th>Status</th>
                                     <th>Objective</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
                                     <th>Daily Budget</th>
                                     <th>Lifetime Budget</th>
                                     <th>Total Spend</th>
                                     <th>Budget Remaining</th>
+                                    <th>Today's Unallocated</th>
                                     <th>Campaign ID</th>
                                 </tr>
                             </thead>
@@ -283,6 +317,16 @@ function getStatusBadge($status) {
                                         <td><strong><?php echo htmlspecialchars($campaign['name']); ?></strong></td>
                                         <td><?php echo getStatusBadge($campaign['status']); ?></td>
                                         <td><?php echo htmlspecialchars($campaign['objective'] ?? 'N/A'); ?></td>
+                                        <td><?php echo formatDate($campaign['start_time'] ?? ''); ?></td>
+                                        <td>
+                                            <?php 
+                                            if (isset($campaign['stop_time']) && !empty($campaign['stop_time'])) {
+                                                echo formatDate($campaign['stop_time']);
+                                            } else {
+                                                echo '<span style="color: #28a745; font-weight: 600;">Continuous</span>';
+                                            }
+                                            ?>
+                                        </td>
                                         <td>
                                             <?php 
                                             if (isset($campaign['daily_budget'])) {
@@ -322,6 +366,21 @@ function getStatusBadge($status) {
                                             if ($budget > 0) {
                                                 $color = $remaining > 0 ? 'green' : 'red';
                                                 echo '<span style="color: ' . $color . '; font-weight: 600;">' . formatCurrency($remaining) . '</span>';
+                                            } else {
+                                                echo 'N/A';
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $todaySpend = isset($data['insights']['campaign'][$campaign['id']]['today']['spend']) 
+                                                ? (float)$data['insights']['campaign'][$campaign['id']]['today']['spend'] 
+                                                : 0;
+                                            $dailyBudget = isset($campaign['daily_budget']) ? $campaign['daily_budget'] / 100 : 0;
+                                            $unallocated = $dailyBudget - $todaySpend;
+                                            if ($dailyBudget > 0 && strtolower($campaign['status']) === 'active') {
+                                                $color = $unallocated > 0 ? '#28a745' : '#dc3545';
+                                                echo '<span style="color: ' . $color . '; font-weight: 600;">' . formatCurrency($unallocated) . '</span>';
                                             } else {
                                                 echo 'N/A';
                                             }
