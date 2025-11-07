@@ -34,7 +34,11 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
             $data = $api->getAllData($dateSince, $dateUntil);
             
             if (isset($data['error'])) {
-                $errorMessage = $data['error'];
+                if (strpos($data['error'], 'User request limit reached') !== false) {
+                    $errorMessage = "⚠️ Facebook API Rate Limit Reached! Please wait 15-30 minutes before trying again. Facebook limits how many requests you can make per hour. Try selecting a narrower time period (Today, Yesterday, This Week) instead of All Time to reduce the number of API calls.";
+                } else {
+                    $errorMessage = $data['error'];
+                }
                 $data = null;
             }
         } catch (Exception $e) {
@@ -123,48 +127,40 @@ function formatDate($dateString) {
             </div>
         <?php endif; ?>
 
-        <?php if ($isConfigured && $data === null && !isset($_GET['load_data'])): ?>
-            <div class="alert alert-info" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
-                <strong>Ready to Load Data</strong><br>
-                Load your Facebook Ads data with time period filtering.
-                <br><br>
-                <form method="GET" id="filterForm" style="margin-top: 15px;">
+        <?php if ($isConfigured): ?>
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <form method="GET" id="filterForm">
                     <input type="hidden" name="load_data" value="1">
                     <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 180px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Time Period</label>
-                            <select name="filter" id="filterSelect" onchange="toggleDateRange()" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="this_week">This Week</option>
-                                <option value="this_month">This Month</option>
-                                <option value="all" selected>All Time</option>
-                                <option value="custom">Custom Date Range</option>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1c1e21;">Time Period</label>
+                            <select name="filter" id="filterSelect" onchange="toggleDateRange()" style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 14px;">
+                                <option value="today" <?php echo $filterType === 'today' ? 'selected' : ''; ?>>Today</option>
+                                <option value="yesterday" <?php echo $filterType === 'yesterday' ? 'selected' : ''; ?>>Yesterday</option>
+                                <option value="this_week" <?php echo $filterType === 'this_week' ? 'selected' : ''; ?>>This Week</option>
+                                <option value="this_month" <?php echo $filterType === 'this_month' ? 'selected' : ''; ?>>This Month</option>
+                                <option value="all" <?php echo $filterType === 'all' ? 'selected' : ''; ?>>All Time</option>
+                                <option value="custom" <?php echo $filterType === 'custom' ? 'selected' : ''; ?>>Custom Date Range</option>
                             </select>
                         </div>
-                        <div id="dateRangeInputs" style="display: none; flex: 2; min-width: 350px;">
-                            <div style="display: flex; gap: 15px;">
-                                <div style="flex: 1;">
-                                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Start Date</label>
-                                    <input type="date" name="start_date" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
-                                </div>
-                                <div style="flex: 1;">
-                                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">End Date</label>
-                                    <input type="date" name="end_date" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
-                                </div>
+                        <div id="dateRangeInputs" style="display: <?php echo $filterType === 'custom' ? 'flex' : 'none'; ?>; flex: 2; min-width: 350px; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1c1e21;">Start Date</label>
+                                <input type="date" name="start_date" value="<?php echo htmlspecialchars($startDate ?? ''); ?>" style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1c1e21;">End Date</label>
+                                <input type="date" name="end_date" value="<?php echo htmlspecialchars($endDate ?? ''); ?>" style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px;">
                             </div>
                         </div>
                         <div>
-                            <button type="submit" id="loadDataBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
+                            <button type="submit" id="loadDataBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
                                 📊 Load Data
                             </button>
                         </div>
                     </div>
-                    <p style="margin-top: 10px; font-size: 13px; color: #0c5460;">
-                        Select a time period to filter your campaign data. This may take 30-60 seconds.
-                    </p>
                 </form>
-                <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
+                <div id="loadingMessage" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
                     <strong>⏳ Loading data from Facebook...</strong><br>
                     Please wait, this may take up to 60 seconds. Do not refresh the page.
                 </div>

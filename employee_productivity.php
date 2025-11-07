@@ -48,6 +48,12 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 $api = new FacebookAdsAPI($accountId);
                 
                 $campaigns = $api->getCampaignsCreatedInRange($timeRange['since'], $timeRange['until']);
+                
+                if (isset($campaigns['error']) && strpos($campaigns['error'], 'User request limit reached') !== false) {
+                    $errorMessage = "⚠️ Facebook API Rate Limit Reached! Please wait 15-30 minutes before trying again. Facebook limits how many requests you can make per hour. Try selecting a narrower time period (Today, Yesterday, This Week) instead of All Time to reduce the number of API calls.";
+                    break;
+                }
+                
                 if (!isset($campaigns['error'])) {
                     $activeCampaigns = array_filter($campaigns, function($campaign) {
                         return isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
@@ -56,6 +62,11 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
+                
+                if (isset($adsets['error']) && strpos($adsets['error'], 'User request limit reached') !== false) {
+                    $errorMessage = "⚠️ Facebook API Rate Limit Reached! Please wait 15-30 minutes before trying again. Facebook limits how many requests you can make per hour. Try selecting a narrower time period (Today, Yesterday, This Week) instead of All Time to reduce the number of API calls.";
+                    break;
+                }
                 
                 echo "<div style='background: #fffbcc; border: 2px solid #ffeb3b; padding: 15px; margin: 10px 0; border-radius: 8px;'>";
                 echo "<h3 style='color: #ff6b00;'>🔍 DEBUG: API Response for Ad Sets</h3>";
@@ -133,6 +144,12 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 }
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
+                
+                if (isset($ads['error']) && strpos($ads['error'], 'User request limit reached') !== false) {
+                    $errorMessage = "⚠️ Facebook API Rate Limit Reached! Please wait 15-30 minutes before trying again. Facebook limits how many requests you can make per hour. Try selecting a narrower time period (Today, Yesterday, This Week) instead of All Time to reduce the number of API calls.";
+                    break;
+                }
+                
                 if (!isset($ads['error'])) {
                     $activeAds = array_filter($ads, function($ad) {
                         return isset($ad['effective_status']) && $ad['effective_status'] === 'ACTIVE';
