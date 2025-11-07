@@ -14,8 +14,14 @@ $allAccounts = $accountManager->getAccounts();
 $errorMessage = null;
 $data = null;
 $isConfigured = false;
-$dateSince = $_GET['date_since'] ?? null;
-$dateUntil = $_GET['date_until'] ?? null;
+
+require_once 'time_filter.php';
+$filterType = $_GET['filter'] ?? 'all';
+$startDate = $_GET['start_date'] ?? null;
+$endDate = $_GET['end_date'] ?? null;
+$timeRange = getTimeRangeForFilter($filterType, $startDate, $endDate);
+$dateSince = $timeRange['since'];
+$dateUntil = $timeRange['until'];
 
 if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
     $isConfigured = true;
@@ -120,18 +126,33 @@ function formatDate($dateString) {
         <?php if ($isConfigured && $data === null && !isset($_GET['load_data'])): ?>
             <div class="alert alert-info" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
                 <strong>Ready to Load Data</strong><br>
-                Load your Facebook Ads data with optional date range filtering.
+                Load your Facebook Ads data with time period filtering.
                 <br><br>
-                <form method="GET" style="margin-top: 15px;">
+                <form method="GET" id="filterForm" style="margin-top: 15px;">
                     <input type="hidden" name="load_data" value="1">
                     <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 180px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Start Date (Optional)</label>
-                            <input type="date" name="date_since" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Time Period</label>
+                            <select name="filter" id="filterSelect" onchange="toggleDateRange()" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="this_week">This Week</option>
+                                <option value="this_month">This Month</option>
+                                <option value="all" selected>All Time</option>
+                                <option value="custom">Custom Date Range</option>
+                            </select>
                         </div>
-                        <div style="flex: 1; min-width: 180px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">End Date (Optional)</label>
-                            <input type="date" name="date_until" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                        <div id="dateRangeInputs" style="display: none; flex: 2; min-width: 350px;">
+                            <div style="display: flex; gap: 15px;">
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">Start Date</label>
+                                    <input type="date" name="start_date" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #0c5460;">End Date</label>
+                                    <input type="date" name="end_date" style="width: 100%; padding: 8px; border: 1px solid #bee5eb; border-radius: 4px;">
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <button type="submit" id="loadDataBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
@@ -140,7 +161,7 @@ function formatDate($dateString) {
                         </div>
                     </div>
                     <p style="margin-top: 10px; font-size: 13px; color: #0c5460;">
-                        Leave dates empty to load all-time data. This may take 30-60 seconds.
+                        Select a time period to filter your campaign data. This may take 30-60 seconds.
                     </p>
                 </form>
                 <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
@@ -149,6 +170,16 @@ function formatDate($dateString) {
                 </div>
             </div>
             <script>
+            function toggleDateRange() {
+                const select = document.getElementById('filterSelect');
+                const dateRange = document.getElementById('dateRangeInputs');
+                if (select.value === 'custom') {
+                    dateRange.style.display = 'flex';
+                } else {
+                    dateRange.style.display = 'none';
+                }
+            }
+            
             function showLoading() {
                 document.getElementById('loadDataBtn').style.opacity = '0.5';
                 document.getElementById('loadDataBtn').style.pointerEvents = 'none';

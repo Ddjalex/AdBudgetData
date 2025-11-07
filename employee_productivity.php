@@ -56,18 +56,80 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
+                
+                echo "<div style='background: #fffbcc; border: 2px solid #ffeb3b; padding: 15px; margin: 10px 0; border-radius: 8px;'>";
+                echo "<h3 style='color: #ff6b00;'>🔍 DEBUG: API Response for Ad Sets</h3>";
+                echo "<strong>Account ID:</strong> " . htmlspecialchars($accountId) . "<br>";
+                echo "<strong>Time Range:</strong> " . htmlspecialchars($timeRange['since']) . " to " . htmlspecialchars($timeRange['until']) . "<br>";
+                echo "<strong>Raw API Response:</strong><pre style='background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;'>" . htmlspecialchars(print_r($adsets, true)) . "</pre>";
+                echo "</div>";
+                
                 if (!isset($adsets['error']) && is_array($adsets)) {
                     $activeAdsets = array_filter($adsets, function($adset) {
                         return isset($adset['effective_status']) && $adset['effective_status'] === 'ACTIVE';
                     });
                     $productivityData[$accountId]['adsets_created'] = count($activeAdsets);
                     
-                    foreach ($activeAdsets as $adset) {
+                    echo "<div style='background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; margin: 10px 0; border-radius: 8px;'>";
+                    echo "<h3 style='color: #1976d2;'>💰 DEBUG: Budget Calculation</h3>";
+                    echo "<strong>Total Active Ad Sets:</strong> " . count($activeAdsets) . "<br><br>";
+                    
+                    foreach ($activeAdsets as $index => $adset) {
+                        echo "<div style='background: #fff; padding: 10px; margin: 10px 0; border-left: 4px solid #2196f3;'>";
+                        echo "<strong>Ad Set #" . ($index + 1) . ":</strong> " . htmlspecialchars($adset['name'] ?? 'N/A') . "<br>";
+                        echo "<strong>ID:</strong> " . htmlspecialchars($adset['id']) . "<br>";
+                        
+                        $lifetimeBudget = isset($adset['lifetime_budget']) ? floatval($adset['lifetime_budget']) : 0;
+                        $dailyBudget = isset($adset['daily_budget']) ? floatval($adset['daily_budget']) : 0;
+                        
+                        echo "<strong>Lifetime Budget (raw):</strong> " . ($lifetimeBudget > 0 ? $lifetimeBudget . " cents" : "NOT SET") . "<br>";
+                        echo "<strong>Daily Budget (raw):</strong> " . ($dailyBudget > 0 ? $dailyBudget . " cents" : "NOT SET") . "<br>";
+                        echo "<strong>Start Time:</strong> " . htmlspecialchars($adset['start_time'] ?? 'NOT SET') . "<br>";
+                        echo "<strong>End Time:</strong> " . htmlspecialchars($adset['end_time'] ?? 'NOT SET') . "<br>";
+                        
+                        if ($lifetimeBudget > 0) {
+                            $budgetUSD = $lifetimeBudget / 100;
+                            echo "<strong style='color: green;'>✓ Using Lifetime Budget: $" . number_format($budgetUSD, 2) . "</strong><br>";
+                        } elseif ($dailyBudget > 0) {
+                            $dailyBudgetUSD = $dailyBudget / 100;
+                            echo "<strong>Daily Budget (USD):</strong> $" . number_format($dailyBudgetUSD, 2) . "<br>";
+                            
+                            $startTime = isset($adset['start_time']) ? strtotime($adset['start_time']) : null;
+                            $endTime = isset($adset['end_time']) ? strtotime($adset['end_time']) : null;
+                            
+                            if ($startTime && $endTime && $endTime > $startTime) {
+                                $durationSeconds = $endTime - $startTime;
+                                $durationDays = max(1, ceil($durationSeconds / 86400));
+                                $allocatedBudget = $dailyBudgetUSD * $durationDays;
+                                echo "<strong>Duration:</strong> $durationDays days<br>";
+                                echo "<strong style='color: green;'>✓ Calculated Budget: $" . number_format($allocatedBudget, 2) . " ($" . number_format($dailyBudgetUSD, 2) . " × $durationDays days)</strong><br>";
+                            } elseif ($startTime) {
+                                $currentTime = time();
+                                $durationSeconds = $currentTime - $startTime;
+                                $durationDays = max(1, ceil($durationSeconds / 86400));
+                                $allocatedBudget = $dailyBudgetUSD * $durationDays;
+                                echo "<strong>Duration (ongoing):</strong> $durationDays days<br>";
+                                echo "<strong style='color: green;'>✓ Calculated Budget (ongoing): $" . number_format($allocatedBudget, 2) . "</strong><br>";
+                            } else {
+                                echo "<strong style='color: red;'>⚠ No start_time - using 30 day fallback</strong><br>";
+                            }
+                        } else {
+                            echo "<strong style='color: red;'>⚠ NO BUDGET SET - Will contribute $0.00</strong><br>";
+                        }
+                        
                         $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset);
+                        echo "<strong style='color: #1976d2; font-size: 16px;'>FINAL CALCULATED BUDGET: $" . number_format($allocatedBudget, 2) . "</strong><br>";
+                        echo "</div>";
+                        
                         if ($allocatedBudget > 0) {
                             $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
                         }
                     }
+                    
+                    echo "<div style='background: #4caf50; color: white; padding: 10px; margin-top: 10px; border-radius: 4px;'>";
+                    echo "<strong>TOTAL ALLOCATED BUDGET FOR THIS ACCOUNT: $" . number_format($productivityData[$accountId]['total_allocated_budget'], 2) . "</strong>";
+                    echo "</div>";
+                    echo "</div>";
                 }
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
@@ -216,6 +278,8 @@ function formatCurrency($amount) {
                                 <option value="today" <?php echo $filterType === 'today' ? 'selected' : ''; ?>>Today</option>
                                 <option value="yesterday" <?php echo $filterType === 'yesterday' ? 'selected' : ''; ?>>Yesterday</option>
                                 <option value="this_week" <?php echo $filterType === 'this_week' ? 'selected' : ''; ?>>This Week</option>
+                                <option value="this_month" <?php echo $filterType === 'this_month' ? 'selected' : ''; ?>>This Month</option>
+                                <option value="all" <?php echo $filterType === 'all' ? 'selected' : ''; ?>>All Time</option>
                                 <option value="custom" <?php echo $filterType === 'custom' ? 'selected' : ''; ?>>Custom Date Range</option>
                             </select>
                         </div>
