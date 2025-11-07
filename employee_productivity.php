@@ -291,7 +291,7 @@ function formatCurrency($amount) {
                     $totalBudget = 0;
                     
                     foreach ($productivityData as $accountId => $data): 
-                        $totalEntities = $data['campaigns_created'] + $data['adsets_created'] + $data['ads_created'];
+                        $totalEntities = $data['adsets_created'] + $data['ads_created'];
                         $totalCampaigns += $data['campaigns_created'];
                         $totalAdSets += $data['adsets_created'];
                         $totalAds += $data['ads_created'];
@@ -314,7 +314,7 @@ function formatCurrency($amount) {
                             <td><span class="metric-value"><?php echo $totalCampaigns; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalAdSets; ?></span></td>
                             <td><span class="metric-value"><?php echo $totalAds; ?></span></td>
-                            <td><span class="metric-value"><?php echo $totalCampaigns + $totalAdSets + $totalAds; ?></span></td>
+                            <td><span class="metric-value"><?php echo $totalAdSets + $totalAds; ?></span></td>
                             <td><span class="budget-value"><?php echo formatCurrency($totalBudget); ?></span></td>
                         </tr>
                     <?php endif; ?>
