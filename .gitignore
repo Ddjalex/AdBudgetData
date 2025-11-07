@@ -1,0 +1,7 @@
+vendor/
+composer.lock
+*.log
+.env
+config.php
+*.cache
+.DS_Store
