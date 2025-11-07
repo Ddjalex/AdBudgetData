@@ -225,4 +225,85 @@ class FacebookAdsAPI {
         
         return $data;
     }
+    
+    public function getCampaignsCreatedInRange($since, $until) {
+        $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $endpoint = "/{$this->adAccountId}/campaigns";
+        
+        $filtering = json_encode([
+            [
+                'field' => 'created_time',
+                'operator' => 'GREATER_THAN',
+                'value' => strtotime($since)
+            ],
+            [
+                'field' => 'created_time',
+                'operator' => 'LESS_THAN',
+                'value' => strtotime($until . ' 23:59:59')
+            ]
+        ]);
+        
+        $params = [
+            'fields' => $fields,
+            'filtering' => $filtering,
+            'limit' => 500
+        ];
+        
+        $response = $this->makeRequest($endpoint, $params);
+        return isset($response['data']) ? $response['data'] : $response;
+    }
+    
+    public function getAdSetsCreatedInRange($since, $until) {
+        $fields = 'id,name,status,campaign_id,daily_budget,lifetime_budget,created_time';
+        $endpoint = "/{$this->adAccountId}/adsets";
+        
+        $filtering = json_encode([
+            [
+                'field' => 'created_time',
+                'operator' => 'GREATER_THAN',
+                'value' => strtotime($since)
+            ],
+            [
+                'field' => 'created_time',
+                'operator' => 'LESS_THAN',
+                'value' => strtotime($until . ' 23:59:59')
+            ]
+        ]);
+        
+        $params = [
+            'fields' => $fields,
+            'filtering' => $filtering,
+            'limit' => 500
+        ];
+        
+        $response = $this->makeRequest($endpoint, $params);
+        return isset($response['data']) ? $response['data'] : $response;
+    }
+    
+    public function getAdsCreatedInRange($since, $until) {
+        $fields = 'id,name,status,adset_id,creative{id,name},created_time';
+        $endpoint = "/{$this->adAccountId}/ads";
+        
+        $filtering = json_encode([
+            [
+                'field' => 'created_time',
+                'operator' => 'GREATER_THAN',
+                'value' => strtotime($since)
+            ],
+            [
+                'field' => 'created_time',
+                'operator' => 'LESS_THAN',
+                'value' => strtotime($until . ' 23:59:59')
+            ]
+        ]);
+        
+        $params = [
+            'fields' => $fields,
+            'filtering' => $filtering,
+            'limit' => 500
+        ];
+        
+        $response = $this->makeRequest($endpoint, $params);
+        return isset($response['data']) ? $response['data'] : $response;
+    }
 }

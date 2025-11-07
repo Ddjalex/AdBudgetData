@@ -28,7 +28,9 @@ class AccountManager {
         }
         
         // Priority 3: Fallback to manual Ad Account ID from settings (config.php)
-        if (defined('FB_AD_ACCOUNT_ID') && FB_AD_ACCOUNT_ID && FB_AD_ACCOUNT_ID !== 'YOUR_AD_ACCOUNT_ID_HERE') {
+        if (defined('FB_AD_ACCOUNT_ID') && FB_AD_ACCOUNT_ID && 
+            FB_AD_ACCOUNT_ID !== 'YOUR_AD_ACCOUNT_ID_HERE' && 
+            FB_AD_ACCOUNT_ID !== 'act_YOUR_ACCOUNT_ID_HERE') {
             $accountId = FB_AD_ACCOUNT_ID;
             $id = str_replace('act_', '', $accountId);
             
@@ -46,7 +48,7 @@ class AccountManager {
                 'timezone_name' => '',
                 'business_name' => '',
                 'active' => true,
-                'is_fallback' => true  // Flag to indicate this is from manual config
+                'is_fallback' => true
             ];
         }
         
