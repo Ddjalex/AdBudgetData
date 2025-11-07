@@ -39,6 +39,8 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 
 ### Campaign Tracking
 - View all campaigns with budget, spend, and status information
+- **Campaign Start & End Dates**: See when campaigns started and when they're scheduled to end
+- **Today's Unallocated Budget**: Monitor how much of today's daily budget is still available per campaign
 - Daily and lifetime budget breakdowns
 - Budget remaining calculations per campaign
 - Campaign objectives and performance metrics
@@ -54,6 +56,11 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 - Creative information and IDs
 - Direct links to Facebook Ads Manager
 - Granular performance tracking
+
+### Date Range Filtering
+- **Optional Date Filtering**: Filter lifetime metrics by custom date ranges
+- **Smart Filtering**: Custom date ranges only apply to lifetime/total metrics, while today's metrics always show current day data
+- **Flexible Analysis**: Leave dates empty to see all-time data, or specify a range for focused analysis
 
 ### User Interface
 - **Tabbed Navigation**: Easy switching between Campaigns, Ad Sets, and Ads views
@@ -161,6 +168,18 @@ Handles multi-account storage and management:
 - Manual account entry for full control and simplicity
 
 ## Recent Changes
+- **2025-11-07**: Advanced Date Range Filtering & Enhanced Campaign Tracking
+  - **IMPLEMENTED** optional date range filtering for insights data retrieval
+  - **ADDED** Start Date and End Date input fields to the data loading form
+  - **SMART FILTERING**: Custom date ranges only apply to lifetime/total metrics; today's metrics always show current day data
+  - **ADDED** START DATE column to Campaigns table showing when each campaign started
+  - **ADDED** END DATE column to Campaigns table showing when campaigns are scheduled to end (or "Continuous" if no end date)
+  - **ADDED** TODAY'S UNALLOCATED BUDGET column to Campaigns table showing remaining daily budget for active campaigns
+  - **UPDATED** api.php to fetch start_time and stop_time fields for campaigns
+  - **UPDATED** all insights methods to conditionally apply custom date ranges only to "lifetime" presets
+  - **CREATED** formatDate() helper function for consistent date display (e.g., "Nov 07, 2025")
+  - **VERIFIED** tab structure correctly separates Campaigns, Ad Sets, and Ads data without mixing
+
 - **2025-11-07**: Switched to Manual-Only Multi-Account Management (CRITICAL REVISION)
   - **REMOVED** all auto-discovery logic and UI from the application
   - **DELETED** `discoverAdAccounts()` method from FacebookAdsAPI class
