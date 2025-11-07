@@ -19,7 +19,7 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 - **Campaign Tracking**: View all campaigns with budget, spend, status, start/end dates, and today's unallocated budget.
 - **Ad Set & Ad-Level Details**: Granular tracking of daily and total spending, performance metrics (impressions, clicks), and creative information.
 - **Date Range Filtering**: Optional date filtering for lifetime metrics, while today's metrics remain current.
-- **Employee Productivity Tracker**: Track employee creation metrics (Campaigns, Ad Sets, Ads created) and allocated budgets per Ad Account. Displays data individually per account, not aggregated.
+- **Employee Productivity Tracker**: Track employee creation metrics (Campaigns, Ad Sets, Ads created) and allocated budgets per Ad Account. Uses accurate duration-based budget calculation. Total Entities count focuses on Ad Sets + Ads created (campaigns tracked separately). Displays data individually per account, not aggregated.
 
 ### User Interface
 - **Tabbed Navigation**: Easy switching between Campaigns, Ad Sets, Ads, and Employee Productivity views.
@@ -30,7 +30,8 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 - **Backend**: PHP 8.4
 - **Frontend**: HTML5, CSS3
 - **API Integration**: Custom PHP classes (`FacebookAdsAPI` for API interaction, `AccountManager` for account handling) to interface with Facebook Marketing API v21.0.
-- **Data Retrieval**: Comprehensive methods to fetch account-level, campaign-level, ad set-level, and ad-level data, including insights (spend, impressions, clicks, CPC, CPM, CTR).
+- **Data Retrieval**: Comprehensive methods to fetch account-level, campaign-level, ad set-level, and ad-level data, including insights (spend, impressions, clicks, CPC, CPM, CTR). Enhanced API calls retrieve budget-critical fields (start_time, end_time, effective_status, budget_remaining) for accurate allocation tracking.
+- **Budget Calculation**: Duration-based allocated budget calculation using `calculateTotalAllocatedBudget()` function. Prioritizes lifetime_budget when available; otherwise calculates daily_budget × duration (days between start_time and end_time). Prevents double-counting by only summing Ad Set budgets (Ads inherit their parent Ad Set's budget).
 - **Security**: `.gitignore` configured to exclude `config.php` and `accounts.json` for credential security.
 
 ## External Dependencies
