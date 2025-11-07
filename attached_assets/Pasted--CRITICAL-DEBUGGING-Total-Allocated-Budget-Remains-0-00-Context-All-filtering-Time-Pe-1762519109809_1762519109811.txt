@@ -1,0 +1,29 @@
+**CRITICAL DEBUGGING: Total Allocated Budget Remains $0.00**
+
+**Context:**
+All filtering (Time Period, Active Status) and counting logic are implemented and working correctly. However, the 'Total Allocated Budget' field consistently shows **$0.00** for all Ad Accounts, even after implementing the duration-based calculation and currency conversion logic.
+
+**Hypothesis:** The issue is likely a failure in fetching the required budget/date data or a miscalculation within the PHP script itself.
+
+**DEBUGGING TASKS (Tasks for Replit Agent):**
+
+1.  **API Response Verification (Critical):**
+    * Temporarily modify the PHP code that receives data from the Facebook API (e.g., in `api.php` or the main processing loop).
+    * **Task:** Immediately after a successful API call for Campaigns or Ad Sets, **temporarily print (echo or var_dump)** the raw JSON response data to the screen (or to the Replit console/log).
+    * **Goal:** Verify that the JSON response actually contains non-zero values for `daily_budget` or `lifetime_budget`, and that `start_time` and `end_time` are present and correctly formatted (e.g., ISO 8601).
+    * **Output:** Show the PHP code for this temporary debugging printout.
+
+2.  **PHP Calculation Debugging (Duration Check):**
+    * Inside the `calculateTotalAllocatedBudget()` function, **temporarily add logging** to show the intermediate calculation steps.
+    * **Task:** For a specific sample Ad Set/Campaign, print the following values *before* multiplying:
+        * The fetched **`daily_budget`** value.
+        * The calculated **Duration in days**.
+        * The fetched **`lifetime_budget`** value.
+    * **Goal:** Confirm that the duration calculation (`$days = $end_date->diff($start_date)->days + 1;`) is correctly yielding a value greater than zero.
+
+3.  **Currency & Type Check:**
+    * **Task:** Ensure the budget values fetched from the API (which are strings) are being correctly cast to a number before calculation. Confirm the final division by 100 is happening correctly.
+
+**Replit Agent Task:**
+
+Provide the PHP code with **temporary debugging print statements** embedded in the API processing logic to show the **raw budget and date fields** being received from Facebook and the **intermediate duration calculation results**. This will help diagnose whether the failure is on the API fetching side or the PHP calculation side.
