@@ -54,7 +54,13 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                     break;
                 }
                 
-                if (!isset($campaigns['error'])) {
+                // Build campaign lookup map for hierarchical budget lookup
+                $campaignMap = [];
+                if (!isset($campaigns['error']) && is_array($campaigns)) {
+                    foreach ($campaigns as $campaign) {
+                        $campaignMap[$campaign['id']] = $campaign;
+                    }
+                    
                     $activeCampaigns = array_filter($campaigns, function($campaign) {
                         return isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
                     });
@@ -89,18 +95,35 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                         echo "<div style='background: #fff; padding: 10px; margin: 10px 0; border-left: 4px solid #2196f3;'>";
                         echo "<strong>Ad Set #" . ($index + 1) . ":</strong> " . htmlspecialchars($adset['name'] ?? 'N/A') . "<br>";
                         echo "<strong>ID:</strong> " . htmlspecialchars($adset['id']) . "<br>";
+                        echo "<strong>Campaign ID:</strong> " . htmlspecialchars($adset['campaign_id'] ?? 'NOT SET') . "<br>";
+                        
+                        // Get parent campaign for hierarchical budget lookup
+                        $parentCampaign = null;
+                        if (isset($adset['campaign_id']) && isset($campaignMap[$adset['campaign_id']])) {
+                            $parentCampaign = $campaignMap[$adset['campaign_id']];
+                            echo "<strong>Parent Campaign:</strong> " . htmlspecialchars($parentCampaign['name'] ?? 'N/A') . "<br>";
+                        }
                         
                         $lifetimeBudget = isset($adset['lifetime_budget']) ? floatval($adset['lifetime_budget']) : 0;
                         $dailyBudget = isset($adset['daily_budget']) ? floatval($adset['daily_budget']) : 0;
                         
-                        echo "<strong>Lifetime Budget (raw):</strong> " . ($lifetimeBudget > 0 ? $lifetimeBudget . " cents" : "NOT SET") . "<br>";
-                        echo "<strong>Daily Budget (raw):</strong> " . ($dailyBudget > 0 ? $dailyBudget . " cents" : "NOT SET") . "<br>";
+                        echo "<strong>Ad Set Lifetime Budget (raw):</strong> " . ($lifetimeBudget > 0 ? $lifetimeBudget . " cents" : "NOT SET") . "<br>";
+                        echo "<strong>Ad Set Daily Budget (raw):</strong> " . ($dailyBudget > 0 ? $dailyBudget . " cents" : "NOT SET") . "<br>";
                         echo "<strong>Start Time:</strong> " . htmlspecialchars($adset['start_time'] ?? 'NOT SET') . "<br>";
                         echo "<strong>End Time:</strong> " . htmlspecialchars($adset['end_time'] ?? 'NOT SET') . "<br>";
                         
+                        // Display parent campaign budget info if no ad set budget
+                        if ($lifetimeBudget <= 0 && $dailyBudget <= 0 && $parentCampaign) {
+                            $campaignLifetime = isset($parentCampaign['lifetime_budget']) ? floatval($parentCampaign['lifetime_budget']) : 0;
+                            $campaignDaily = isset($parentCampaign['daily_budget']) ? floatval($parentCampaign['daily_budget']) : 0;
+                            echo "<br><strong style='color: #ff6b00;'>⬆️ CHECKING PARENT CAMPAIGN BUDGET:</strong><br>";
+                            echo "<strong>Campaign Lifetime Budget:</strong> " . ($campaignLifetime > 0 ? $campaignLifetime . " cents" : "NOT SET") . "<br>";
+                            echo "<strong>Campaign Daily Budget:</strong> " . ($campaignDaily > 0 ? $campaignDaily . " cents" : "NOT SET") . "<br>";
+                        }
+                        
                         if ($lifetimeBudget > 0) {
                             $budgetUSD = $lifetimeBudget / 100;
-                            echo "<strong style='color: green;'>✓ Using Lifetime Budget: $" . number_format($budgetUSD, 2) . "</strong><br>";
+                            echo "<strong style='color: green;'>✓ P1: Using Ad Set Lifetime Budget: $" . number_format($budgetUSD, 2) . "</strong><br>";
                         } elseif ($dailyBudget > 0) {
                             $dailyBudgetUSD = $dailyBudget / 100;
                             echo "<strong>Daily Budget (USD):</strong> $" . number_format($dailyBudgetUSD, 2) . "<br>";
@@ -113,23 +136,31 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                                 $durationDays = max(1, ceil($durationSeconds / 86400));
                                 $allocatedBudget = $dailyBudgetUSD * $durationDays;
                                 echo "<strong>Duration:</strong> $durationDays days<br>";
-                                echo "<strong style='color: green;'>✓ Calculated Budget: $" . number_format($allocatedBudget, 2) . " ($" . number_format($dailyBudgetUSD, 2) . " × $durationDays days)</strong><br>";
+                                echo "<strong style='color: green;'>✓ P1: Calculated Ad Set Daily Budget: $" . number_format($allocatedBudget, 2) . " ($" . number_format($dailyBudgetUSD, 2) . " × $durationDays days)</strong><br>";
                             } elseif ($startTime) {
                                 $currentTime = time();
                                 $durationSeconds = $currentTime - $startTime;
                                 $durationDays = max(1, ceil($durationSeconds / 86400));
                                 $allocatedBudget = $dailyBudgetUSD * $durationDays;
                                 echo "<strong>Duration (ongoing):</strong> $durationDays days<br>";
-                                echo "<strong style='color: green;'>✓ Calculated Budget (ongoing): $" . number_format($allocatedBudget, 2) . "</strong><br>";
+                                echo "<strong style='color: green;'>✓ P1: Calculated Ad Set Budget (ongoing): $" . number_format($allocatedBudget, 2) . "</strong><br>";
                             } else {
                                 echo "<strong style='color: red;'>⚠ No start_time - using 30 day fallback</strong><br>";
                             }
                         } else {
-                            echo "<strong style='color: red;'>⚠ NO BUDGET SET - Will contribute $0.00</strong><br>";
+                            echo "<strong style='color: orange;'>⚠ NO AD SET BUDGET - Checking Parent Campaign...</strong><br>";
                         }
                         
-                        $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset);
-                        echo "<strong style='color: #1976d2; font-size: 16px;'>FINAL CALCULATED BUDGET: $" . number_format($allocatedBudget, 2) . "</strong><br>";
+                        // Hierarchical budget calculation with parent campaign
+                        $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset, $parentCampaign);
+                        echo "<strong style='color: #1976d2; font-size: 16px;'>🎯 FINAL CALCULATED BUDGET: $" . number_format($allocatedBudget, 2) . "</strong><br>";
+                        
+                        if ($allocatedBudget > 0 && $lifetimeBudget <= 0 && $dailyBudget <= 0) {
+                            echo "<strong style='color: green; font-size: 14px;'>✓ P2: Budget inherited from Parent Campaign</strong><br>";
+                        } elseif ($allocatedBudget <= 0) {
+                            echo "<strong style='color: red; font-size: 14px;'>⚠ P3: No budget found (Ad Set or Campaign)</strong><br>";
+                        }
+                        
                         echo "</div>";
                         
                         if ($allocatedBudget > 0) {

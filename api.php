@@ -51,7 +51,7 @@ class FacebookAdsAPI {
     }
     
     public function getCampaigns() {
-        $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $fields = 'id,name,status,objective,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         $params = [
             'fields' => $fields,
@@ -81,7 +81,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdSets($campaignId = null) {
-        $fields = 'id,name,status,campaign_id,daily_budget,lifetime_budget,created_time';
+        $fields = 'id,name,status,campaign_id,budget,daily_budget,lifetime_budget,created_time,start_time,end_time';
         
         if ($campaignId) {
             $endpoint = "/{$campaignId}/adsets";
@@ -227,7 +227,7 @@ class FacebookAdsAPI {
     }
     
     public function getCampaignsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $fields = 'id,name,status,effective_status,objective,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         
         $filtering = json_encode([
@@ -254,7 +254,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdSetsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,effective_status,campaign_id,daily_budget,lifetime_budget,budget_remaining,created_time,start_time,end_time';
+        $fields = 'id,name,status,effective_status,campaign_id,budget,daily_budget,lifetime_budget,budget_remaining,created_time,start_time,end_time';
         $endpoint = "/{$this->adAccountId}/adsets";
         
         $filtering = json_encode([
@@ -307,67 +307,93 @@ class FacebookAdsAPI {
         return isset($response['data']) ? $response['data'] : $response;
     }
     
-    public static function calculateTotalAllocatedBudget($entity) {
+    public static function calculateTotalAllocatedBudget($entity, $parentCampaign = null) {
         $allocatedBudget = 0;
         
+        // P1: Check Ad Set's own budget fields (Highest Priority)
         $lifetimeBudget = isset($entity['lifetime_budget']) ? floatval($entity['lifetime_budget']) : 0;
         $dailyBudget = isset($entity['daily_budget']) ? floatval($entity['daily_budget']) : 0;
+        $budget = isset($entity['budget']) ? floatval($entity['budget']) : 0;
         
+        // Try Ad Set's lifetime_budget first
         if ($lifetimeBudget > 0) {
             $allocatedBudget = $lifetimeBudget / 100;
-        } elseif ($dailyBudget > 0) {
-            $dailyBudgetUSD = $dailyBudget / 100;
+        } 
+        // Try Ad Set's daily_budget
+        elseif ($dailyBudget > 0) {
+            $allocatedBudget = self::calculateDailyBudgetAllocation(
+                $dailyBudget,
+                $entity['start_time'] ?? null,
+                $entity['end_time'] ?? null
+            );
+        }
+        // Try Ad Set's generic budget field
+        elseif ($budget > 0) {
+            $allocatedBudget = $budget / 100;
+        }
+        // P2: Check Parent Campaign's budget (Second Priority)
+        elseif ($parentCampaign !== null) {
+            $campaignLifetimeBudget = isset($parentCampaign['lifetime_budget']) ? floatval($parentCampaign['lifetime_budget']) : 0;
+            $campaignDailyBudget = isset($parentCampaign['daily_budget']) ? floatval($parentCampaign['daily_budget']) : 0;
+            $campaignBudget = isset($parentCampaign['budget']) ? floatval($parentCampaign['budget']) : 0;
             
-            $startTime = isset($entity['start_time']) ? strtotime($entity['start_time']) : null;
-            $endTime = isset($entity['end_time']) ? strtotime($entity['end_time']) : null;
-            
-            if ($startTime && $endTime && $endTime > $startTime) {
-                $durationInSeconds = $endTime - $startTime;
-                $durationInDays = max(1, ceil($durationInSeconds / 86400));
-                $allocatedBudget = $dailyBudgetUSD * $durationInDays;
-            } elseif ($startTime) {
-                $currentTime = time();
-                if ($currentTime > $startTime) {
-                    $durationInSeconds = $currentTime - $startTime;
-                    $durationInDays = max(1, ceil($durationInSeconds / 86400));
-                    $allocatedBudget = $dailyBudgetUSD * $durationInDays;
-                } else {
-                    $allocatedBudget = $dailyBudgetUSD * 30;
-                }
-            } else {
-                $allocatedBudget = $dailyBudgetUSD * 30;
+            if ($campaignLifetimeBudget > 0) {
+                $allocatedBudget = $campaignLifetimeBudget / 100;
+            } elseif ($campaignDailyBudget > 0) {
+                $allocatedBudget = self::calculateDailyBudgetAllocation(
+                    $campaignDailyBudget,
+                    $parentCampaign['start_time'] ?? ($entity['start_time'] ?? null),
+                    $parentCampaign['stop_time'] ?? ($entity['end_time'] ?? null)
+                );
+            } elseif ($campaignBudget > 0) {
+                $allocatedBudget = $campaignBudget / 100;
             }
-        } elseif (isset($entity['adset'])) {
+        }
+        // Special case: Check for nested adset data (for Ads entities)
+        elseif (isset($entity['adset'])) {
             $adsetLifetimeBudget = isset($entity['adset']['lifetime_budget']) ? floatval($entity['adset']['lifetime_budget']) : 0;
             $adsetDailyBudget = isset($entity['adset']['daily_budget']) ? floatval($entity['adset']['daily_budget']) : 0;
             
             if ($adsetLifetimeBudget > 0) {
                 $allocatedBudget = $adsetLifetimeBudget / 100;
             } elseif ($adsetDailyBudget > 0) {
-                $dailyBudgetUSD = $adsetDailyBudget / 100;
-                
-                $startTime = isset($entity['adset']['start_time']) ? strtotime($entity['adset']['start_time']) : null;
-                $endTime = isset($entity['adset']['end_time']) ? strtotime($entity['adset']['end_time']) : null;
-                
-                if ($startTime && $endTime && $endTime > $startTime) {
-                    $durationInSeconds = $endTime - $startTime;
-                    $durationInDays = max(1, ceil($durationInSeconds / 86400));
-                    $allocatedBudget = $dailyBudgetUSD * $durationInDays;
-                } elseif ($startTime) {
-                    $currentTime = time();
-                    if ($currentTime > $startTime) {
-                        $durationInSeconds = $currentTime - $startTime;
-                        $durationInDays = max(1, ceil($durationInSeconds / 86400));
-                        $allocatedBudget = $dailyBudgetUSD * $durationInDays;
-                    } else {
-                        $allocatedBudget = $dailyBudgetUSD * 30;
-                    }
-                } else {
-                    $allocatedBudget = $dailyBudgetUSD * 30;
-                }
+                $allocatedBudget = self::calculateDailyBudgetAllocation(
+                    $adsetDailyBudget,
+                    $entity['adset']['start_time'] ?? null,
+                    $entity['adset']['end_time'] ?? null
+                );
             }
         }
+        // P3: Final fallback is $0.00 (already set by default)
         
         return round($allocatedBudget, 2);
+    }
+    
+    private static function calculateDailyBudgetAllocation($dailyBudgetCents, $startTime, $endTime) {
+        $dailyBudgetUSD = $dailyBudgetCents / 100;
+        
+        $startTimestamp = $startTime ? strtotime($startTime) : null;
+        $endTimestamp = $endTime ? strtotime($endTime) : null;
+        
+        if ($startTimestamp && $endTimestamp && $endTimestamp > $startTimestamp) {
+            // Campaign/AdSet has both start and end dates
+            $durationInSeconds = $endTimestamp - $startTimestamp;
+            $durationInDays = max(1, ceil($durationInSeconds / 86400));
+            return $dailyBudgetUSD * $durationInDays;
+        } elseif ($startTimestamp) {
+            // Campaign/AdSet is ongoing (no end date)
+            $currentTime = time();
+            if ($currentTime > $startTimestamp) {
+                $durationInSeconds = $currentTime - $startTimestamp;
+                $durationInDays = max(1, ceil($durationInSeconds / 86400));
+                return $dailyBudgetUSD * $durationInDays;
+            } else {
+                // Hasn't started yet, use 30-day estimate
+                return $dailyBudgetUSD * 30;
+            }
+        } else {
+            // No timing information, use 30-day estimate
+            return $dailyBudgetUSD * 30;
+        }
     }
 }

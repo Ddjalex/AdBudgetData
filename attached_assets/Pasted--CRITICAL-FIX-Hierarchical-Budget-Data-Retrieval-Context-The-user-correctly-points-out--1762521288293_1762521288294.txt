@@ -1,0 +1,25 @@
+**CRITICAL FIX: Hierarchical Budget Data Retrieval**
+
+**Context:**
+The user correctly points out that budgets (especially Lifetime Budget) may be set at the **Campaign Level** rather than the **Ad Set Level**. The current $0.00 bug may be due to the PHP logic failing to check the Campaign entity's budget fields when the Ad Set's fields are 'NOT SET'.
+
+**GOAL:** Implement a hierarchical lookup for the Total Allocated Budget.
+
+**TASK: Revise Data Fetching and Calculation Flow:**
+
+1.  **Hierarchical Data Fetching:**
+    * The PHP processing must ensure that when an Ad Set is analyzed, the budget information from its **parent Campaign** is readily available.
+    * **Action:** Update the API call for Ad Sets to ensure the `campaign_id` field is always fetched. Then, ensure the corresponding Campaign data (including its budget fields) is retrieved and linked.
+
+2.  **Budget Lookup Priority Logic (PHP Implementation):**
+    * The `calculateTotalAllocatedBudget()` function needs a major revision to implement the following priority check:
+        * **P1 (Highest Priority):** Check the **Ad Set** entity itself for `lifetime_budget`, `daily_budget`, or the generic `budget` field. If found, use this value.
+        * **P2 (Second Priority):** If P1 fields are NOT SET, look up the budget data on the **Parent Campaign** (using the fetched `campaign_id`).
+            * Check the Campaign's `lifetime_budget`, `daily_budget`, or `budget` fields. If found, use this value for the Ad Set, applying the required duration calculation if it's a daily budget.
+        * **P3 (Final Check):** If P1 and P2 yield no budget data, only then assign **$0.00**.
+
+3.  **API Field Verification (Recap):**
+    * Ensure both Campaign and Ad Set API calls are explicitly requesting the comprehensive set of budget fields: **`budget`**, **`daily_budget`**, **`lifetime_budget`**, `start_time`, and `end_time`.
+
+**Replit Agent Task:**
+Provide the updated PHP code structure, demonstrating how Campaign data is linked to Ad Set data and how the `calculateTotalAllocatedBudget()` function now implements the **P1 (Ad Set) -> P2 (Campaign) hierarchical lookup** to accurately determine the Total Allocated Budget. This should finally resolve the persistent $0.00 issue.
