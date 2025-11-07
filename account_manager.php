@@ -110,31 +110,48 @@ class AccountManager {
         }
         
         $syncedAccounts = [];
-        $isFirstAccount = true;
+        $foundCurrentActive = false;
+        $firstActiveAccountId = null;
         
         foreach ($discoveredAccounts as $discovered) {
             $accountId = $discovered['id'];
             $id = str_replace('act_', '', $accountId);
+            $accountStatus = $discovered['account_status'] ?? 1;
+            
+            $businessName = '';
+            if (isset($discovered['business']) && is_array($discovered['business'])) {
+                $businessName = $discovered['business']['name'] ?? '';
+            }
             
             $isActive = false;
-            if ($currentActiveId === $id) {
-                $isActive = true;
-            } elseif (empty($currentActiveId) && $isFirstAccount) {
-                $isActive = true;
+            if ($accountStatus == 1) {
+                if ($currentActiveId === $id) {
+                    $isActive = true;
+                    $foundCurrentActive = true;
+                } elseif (empty($firstActiveAccountId)) {
+                    $firstActiveAccountId = $id;
+                }
             }
             
             $syncedAccounts[] = [
                 'id' => $id,
                 'name' => $discovered['name'] ?? 'Ad Account ' . $id,
                 'account_id' => $accountId,
-                'account_status' => $discovered['account_status'] ?? 1,
+                'account_status' => $accountStatus,
                 'currency' => $discovered['currency'] ?? 'USD',
                 'timezone_name' => $discovered['timezone_name'] ?? '',
-                'business_name' => $discovered['business_name'] ?? '',
+                'business_name' => $businessName,
                 'active' => $isActive
             ];
-            
-            $isFirstAccount = false;
+        }
+        
+        if (!$foundCurrentActive && $firstActiveAccountId !== null) {
+            foreach ($syncedAccounts as &$account) {
+                if ($account['id'] === $firstActiveAccountId) {
+                    $account['active'] = true;
+                    break;
+                }
+            }
         }
         
         file_put_contents($this->accountsFile, json_encode($syncedAccounts, JSON_PRETTY_PRINT));

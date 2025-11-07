@@ -45,7 +45,7 @@ class FacebookAdsAPI {
     }
     
     public function discoverAdAccounts() {
-        $fields = 'id,name,account_status,currency,timezone_name,business_name';
+        $fields = 'id,name,account_status,currency,timezone_name,business{name}';
         $endpoint = "/me/adaccounts";
         $params = [
             'fields' => $fields,
