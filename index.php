@@ -55,18 +55,13 @@ function getStatusBadge($status) {
         <div class="header">
             <h1>Facebook Ads Budget Tracker</h1>
             <p>Track and analyze your Facebook advertising campaigns, ad sets, and ads in real-time</p>
+            <a href="settings.php" style="position: absolute; top: 30px; right: 30px; background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">⚙ Settings</a>
         </div>
 
         <?php if (!$isConfigured): ?>
             <div class="alert alert-warning">
                 <strong>Configuration Required</strong><br>
-                Please update your Facebook API credentials in <code>config.php</code>:
-                <ul style="margin-top: 10px; margin-left: 20px;">
-                    <li>FB_APP_ID</li>
-                    <li>FB_APP_SECRET</li>
-                    <li>FB_ACCESS_TOKEN</li>
-                    <li>FB_AD_ACCOUNT_ID</li>
-                </ul>
+                Please update your Facebook API credentials. <a href="settings.php" style="color: #856404; text-decoration: underline; font-weight: 600;">Click here to configure settings</a>
             </div>
         <?php endif; ?>
 
