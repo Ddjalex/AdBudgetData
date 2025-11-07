@@ -14,12 +14,43 @@ class AccountManager {
     
     public function getActiveAccount() {
         $accounts = $this->getAccounts();
+        
+        // Priority 1: Return actively selected account from discovered accounts
         foreach ($accounts as $account) {
             if ($account['active']) {
                 return $account;
             }
         }
-        return !empty($accounts) ? $accounts[0] : null;
+        
+        // Priority 2: If no active account found, return first account if available
+        if (!empty($accounts)) {
+            return $accounts[0];
+        }
+        
+        // Priority 3: Fallback to manual Ad Account ID from settings (config.php)
+        if (defined('FB_AD_ACCOUNT_ID') && FB_AD_ACCOUNT_ID && FB_AD_ACCOUNT_ID !== 'YOUR_AD_ACCOUNT_ID_HERE') {
+            $accountId = FB_AD_ACCOUNT_ID;
+            $id = str_replace('act_', '', $accountId);
+            
+            // Make sure it has act_ prefix
+            if (!str_starts_with($accountId, 'act_')) {
+                $accountId = 'act_' . $accountId;
+            }
+            
+            return [
+                'id' => $id,
+                'name' => 'Manual Account (Fallback)',
+                'account_id' => $accountId,
+                'account_status' => 1,
+                'currency' => 'USD',
+                'timezone_name' => '',
+                'business_name' => '',
+                'active' => true,
+                'is_fallback' => true  // Flag to indicate this is from manual config
+            ];
+        }
+        
+        return null;
     }
     
     public function getAccountById($id) {

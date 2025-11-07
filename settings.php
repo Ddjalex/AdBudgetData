@@ -181,9 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="ad_account_id">Ad Account ID</label>
-                    <input type="text" id="ad_account_id" name="ad_account_id" value="<?php echo htmlspecialchars(str_replace('act_', '', FB_AD_ACCOUNT_ID)); ?>" required placeholder="1234567890">
-                    <small>Your Ad Account ID (the act_ prefix will be added automatically)</small>
+                    <label for="ad_account_id">Primary Ad Account ID (Optional Fallback)</label>
+                    <input type="text" id="ad_account_id" name="ad_account_id" value="<?php echo htmlspecialchars(str_replace('act_', '', FB_AD_ACCOUNT_ID)); ?>" placeholder="1234567890">
+                    <small>Your Ad Account ID (the act_ prefix will be added automatically). This is used as a fallback when no account is selected from auto-discovery. <strong>Recommended:</strong> Use the "Manage Accounts" page to discover and manage multiple accounts.</small>
                 </div>
 
                 <div style="margin-top: 30px;">
