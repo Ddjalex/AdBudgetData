@@ -1,0 +1,34 @@
+**Enhancement Task: Implement Financial and Visual Tracking Dashboard**
+
+**Objective:**
+Integrate the required financial metrics and visual indicators into the existing PHP Multi-Ad Account Tracking Dashboard, replicating the clean, metric-focused presentation style commonly used in professional ad reports.
+
+**Key Visual & Data Requirements (Based on Client Needs):**
+
+1.  **Metric Cards (KPI Overview):**
+    * At the top of the selected Ad Account's dashboard, implement a set of prominent **"Metric Cards" (or Scorecards)** using HTML/CSS.
+    * These cards must clearly display the most crucial **Total Financial Metrics** for the selected Ad Account:
+        * **Total Spend:** The accumulated cost spent so far.
+        * **Total Budget:** The total allocated budget (or Lifetime Budget) for the active campaigns in the account.
+        * **Remaining Budget:** A calculated value (Total Budget - Total Spend).
+
+2.  **Visual Budget Bar (Progress Tracker):**
+    * Directly beneath the metric cards, create a **Visual Budget Bar (Progress Bar)** using HTML/CSS.
+    * This bar must visually represent **Budget Utilization**:
+        * **Function:** Display the percentage of the budget that has been spent relative to the total allocated budget (`(Total Spend / Total Budget) * 100`).
+        * **Design:** Use clear colors (e.g., Green for low usage, Yellow for moderate, and potentially Red/Orange if utilization exceeds 80% or 90% of the total budget).
+
+3.  **Data Filtering and Grouping:**
+    * Ensure the main reporting table still groups data hierarchically: **Campaign > Ad Set > Ad.**
+    * The table must prominently include the following financial fields retrieved from the Facebook Marketing API:
+        * `Name` (Campaign/Ad Set/Ad).
+        * `Budget` (Daily or Lifetime).
+        * `Spend` (Amount spent so far).
+
+**Replit Agent Tasks:**
+
+1.  **PHP Calculation Logic:** Provide the necessary PHP logic to aggregate the `Total Spend` and `Total Budget` from all active campaigns within the selected Ad Account.
+2.  **HTML/CSS for Scorecards:** Generate the HTML/CSS required to display the three "Metric Cards" (Total Spend, Total Budget, Remaining Budget) prominently at the top of the dashboard.
+3.  **HTML/CSS for Progress Bar:** Create the specific HTML/CSS code for the **Visual Budget Progress Bar**, dynamically using a calculated PHP variable for the width percentage.
+
+**Start by providing the updated HTML/CSS structure for the KPI cards and the progress bar, using placeholder values for the financial metrics to demonstrate the intended look and feel.**

@@ -2,17 +2,21 @@
 
 require_once 'config.php';
 require_once 'api.php';
+require_once 'account_manager.php';
+
+$accountManager = new AccountManager();
+$activeAccount = $accountManager->getActiveAccount();
+$allAccounts = $accountManager->getAccounts();
 
 $errorMessage = null;
 $data = null;
 $isConfigured = false;
 
-if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && 
-    FB_AD_ACCOUNT_ID !== 'act_YOUR_AD_ACCOUNT_ID') {
+if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
     $isConfigured = true;
     
     try {
-        $api = new FacebookAdsAPI();
+        $api = new FacebookAdsAPI($activeAccount['account_id']);
         $data = $api->getAllData();
         
         if (isset($data['error'])) {
@@ -55,13 +59,38 @@ function getStatusBadge($status) {
         <div class="header">
             <h1>Facebook Ads Budget Tracker</h1>
             <p>Track and analyze your Facebook advertising campaigns, ad sets, and ads in real-time</p>
-            <a href="settings.php" style="position: absolute; top: 30px; right: 30px; background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">⚙ Settings</a>
+            <div style="position: absolute; top: 30px; right: 30px; display: flex; gap: 10px;">
+                <a href="manage_accounts.php" style="background: #42b72a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">📊 Accounts</a>
+                <a href="settings.php" style="background: #1877f2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">⚙ Settings</a>
+            </div>
         </div>
+
+        <?php if (!empty($allAccounts) && count($allAccounts) > 1): ?>
+            <div class="account-selector">
+                <label>Active Ad Account:</label>
+                <select id="accountSelect" onchange="switchAccount(this.value)">
+                    <?php foreach ($allAccounts as $account): ?>
+                        <option value="<?php echo htmlspecialchars($account['id']); ?>" <?php echo $account['active'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($account['name']); ?> (<?php echo htmlspecialchars($account['account_id']); ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        <?php elseif (!empty($activeAccount)): ?>
+            <div class="account-info-bar">
+                <strong>Tracking:</strong> <?php echo htmlspecialchars($activeAccount['name']); ?> 
+                <span style="color: #65676b;">(<?php echo htmlspecialchars($activeAccount['account_id']); ?>)</span>
+            </div>
+        <?php endif; ?>
 
         <?php if (!$isConfigured): ?>
             <div class="alert alert-warning">
                 <strong>Configuration Required</strong><br>
-                Please update your Facebook API credentials. <a href="settings.php" style="color: #856404; text-decoration: underline; font-weight: 600;">Click here to configure settings</a>
+                <?php if (!$activeAccount): ?>
+                    Please add your first Ad Account. <a href="manage_accounts.php" style="color: #856404; text-decoration: underline; font-weight: 600;">Click here to add an account</a>
+                <?php else: ?>
+                    Please update your Facebook API credentials. <a href="settings.php" style="color: #856404; text-decoration: underline; font-weight: 600;">Click here to configure settings</a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -76,6 +105,7 @@ function getStatusBadge($status) {
             <?php
             $totalLifetimeSpend = 0;
             $totalTodaySpend = 0;
+            $totalBudget = 0;
             $totalCampaigns = isset($data['campaigns']) ? count($data['campaigns']) : 0;
             $activeCampaigns = 0;
             
@@ -87,26 +117,94 @@ function getStatusBadge($status) {
                     if (isset($data['insights']['campaign'][$campaign['id']]['today']['spend'])) {
                         $totalTodaySpend += (float)$data['insights']['campaign'][$campaign['id']]['today']['spend'];
                     }
+                    
+                    if (isset($campaign['lifetime_budget'])) {
+                        $totalBudget += $campaign['lifetime_budget'] / 100;
+                    } elseif (isset($campaign['daily_budget'])) {
+                        $totalBudget += ($campaign['daily_budget'] / 100) * 30;
+                    }
+                    
                     if (strtolower($campaign['status']) === 'active') {
                         $activeCampaigns++;
                     }
                 }
             }
+            
+            $remainingBudget = $totalBudget - $totalLifetimeSpend;
+            $budgetUsedPercent = $totalBudget > 0 ? ($totalLifetimeSpend / $totalBudget) * 100 : 0;
+            
+            $progressBarColor = '#28a745';
+            if ($budgetUsedPercent >= 90) {
+                $progressBarColor = '#dc3545';
+            } elseif ($budgetUsedPercent >= 80) {
+                $progressBarColor = '#ffc107';
+            } elseif ($budgetUsedPercent >= 60) {
+                $progressBarColor = '#17a2b8';
+            }
             ?>
             
+            <div class="kpi-cards-container">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #e3f2fd;">💰</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Total Budget</div>
+                        <div class="kpi-value"><?php echo formatCurrency($totalBudget); ?></div>
+                        <div class="kpi-sublabel">Allocated for campaigns</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #fff3cd;">📊</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Total Spend</div>
+                        <div class="kpi-value"><?php echo formatCurrency($totalLifetimeSpend); ?></div>
+                        <div class="kpi-sublabel">Lifetime across campaigns</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: <?php echo $remainingBudget > 0 ? '#d4edda' : '#f8d7da'; ?>;">
+                        <?php echo $remainingBudget > 0 ? '✓' : '⚠'; ?>
+                    </div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Remaining Budget</div>
+                        <div class="kpi-value" style="color: <?php echo $remainingBudget > 0 ? '#28a745' : '#dc3545'; ?>;">
+                            <?php echo formatCurrency($remainingBudget); ?>
+                        </div>
+                        <div class="kpi-sublabel">Available to spend</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #e7f3ff;">📅</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Today's Spend</div>
+                        <div class="kpi-value"><?php echo formatCurrency($totalTodaySpend); ?></div>
+                        <div class="kpi-sublabel">All active campaigns</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="budget-progress-container">
+                <div class="progress-header">
+                    <h3>Budget Utilization</h3>
+                    <span class="progress-percentage"><?php echo number_format($budgetUsedPercent, 1); ?>%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: <?php echo min($budgetUsedPercent, 100); ?>%; background: <?php echo $progressBarColor; ?>;">
+                        <?php if ($budgetUsedPercent > 5): ?>
+                            <span class="progress-bar-text"><?php echo formatCurrency($totalLifetimeSpend); ?> / <?php echo formatCurrency($totalBudget); ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if ($budgetUsedPercent >= 80): ?>
+                    <div class="progress-warning">
+                        ⚠ You've used <?php echo number_format($budgetUsedPercent, 1); ?>% of your total budget
+                    </div>
+                <?php endif; ?>
+            </div>
+            
             <div class="summary-cards-container">
-                <div class="summary-card spend">
-                    <div class="summary-card-title">Total Lifetime Spend</div>
-                    <div class="summary-card-value"><?php echo formatCurrency($totalLifetimeSpend); ?></div>
-                    <div class="summary-card-subtitle">Across all campaigns</div>
-                </div>
-                
-                <div class="summary-card today">
-                    <div class="summary-card-title">Today's Spend</div>
-                    <div class="summary-card-value"><?php echo formatCurrency($totalTodaySpend); ?></div>
-                    <div class="summary-card-subtitle">All active campaigns</div>
-                </div>
-                
                 <div class="summary-card campaigns">
                     <div class="summary-card-title">Total Campaigns</div>
                     <div class="summary-card-value"><?php echo $totalCampaigns; ?></div>
@@ -187,7 +285,8 @@ function getStatusBadge($status) {
                                             $budget = isset($campaign['lifetime_budget']) ? $campaign['lifetime_budget'] / 100 : 0;
                                             $remaining = $budget - $lifetimeSpend;
                                             if ($budget > 0) {
-                                                echo formatCurrency($remaining);
+                                                $color = $remaining > 0 ? 'green' : 'red';
+                                                echo '<span style="color: ' . $color . '; font-weight: 600;">' . formatCurrency($remaining) . '</span>';
                                             } else {
                                                 echo 'N/A';
                                             }
@@ -360,7 +459,7 @@ function getStatusBadge($status) {
                                             ?>
                                         </td>
                                         <td>
-                                            <a href="https://www.facebook.com/ads/manager/account/campaigns/?act=<?php echo urlencode(str_replace('act_', '', FB_AD_ACCOUNT_ID)); ?>&selected_ad_ids=<?php echo urlencode($ad['id']); ?>" 
+                                            <a href="https://www.facebook.com/ads/manager/account/campaigns/?act=<?php echo urlencode(str_replace('act_', '', $activeAccount['account_id'])); ?>&selected_ad_ids=<?php echo urlencode($ad['id']); ?>" 
                                                class="ad-link" target="_blank" rel="noopener noreferrer">
                                                 <?php echo htmlspecialchars($ad['id']); ?>
                                             </a>
@@ -395,6 +494,27 @@ function getStatusBadge($status) {
             
             document.getElementById(tabName + '-tab').classList.add('active');
             event.target.classList.add('active');
+        }
+
+        function switchAccount(accountId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'manage_accounts.php';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'set_active';
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'account_id';
+            idInput.value = accountId;
+            
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 </body>
