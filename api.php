@@ -50,17 +50,6 @@ class FacebookAdsAPI {
         return $data;
     }
     
-    public function discoverAdAccounts() {
-        $fields = 'id,name,account_status,currency,timezone_name,business{name}';
-        $endpoint = "/me/adaccounts";
-        $params = [
-            'fields' => $fields,
-            'limit' => 100
-        ];
-        
-        return $this->makeRequest($endpoint, $params);
-    }
-    
     public function getCampaigns() {
         $fields = 'id,name,status,objective,daily_budget,lifetime_budget,created_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
