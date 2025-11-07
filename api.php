@@ -68,7 +68,7 @@ class FacebookAdsAPI {
             'fields' => $fields
         ];
         
-        if ($dateSince && $dateUntil) {
+        if ($dateSince && $dateUntil && $datePreset === 'lifetime') {
             $params['time_range'] = json_encode([
                 'since' => $dateSince,
                 'until' => $dateUntil
@@ -121,7 +121,7 @@ class FacebookAdsAPI {
             'fields' => $fields
         ];
         
-        if ($dateSince && $dateUntil) {
+        if ($dateSince && $dateUntil && $datePreset === 'lifetime') {
             $params['time_range'] = json_encode([
                 'since' => $dateSince,
                 'until' => $dateUntil
@@ -140,7 +140,7 @@ class FacebookAdsAPI {
             'fields' => $fields
         ];
         
-        if ($dateSince && $dateUntil) {
+        if ($dateSince && $dateUntil && $datePreset === 'lifetime') {
             $params['time_range'] = json_encode([
                 'since' => $dateSince,
                 'until' => $dateUntil
