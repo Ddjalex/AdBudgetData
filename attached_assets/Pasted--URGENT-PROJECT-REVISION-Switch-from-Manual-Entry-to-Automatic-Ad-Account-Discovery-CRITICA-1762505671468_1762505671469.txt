@@ -1,0 +1,32 @@
+**URGENT PROJECT REVISION: Switch from Manual Entry to Automatic Ad Account Discovery**
+
+**CRITICAL ISSUE:**
+The current implementation requires manual entry of Ad Account IDs. This is inefficient as the provided Access Token is already associated with a **Business Manager** or **User** that manages all required Ad Accounts.
+
+**NEW CORE REQUIREMENT:**
+The application must **automatically discover and list all managed Ad Accounts** linked to the configured Access Token and App ID/Secret, instead of relying on manual entry.
+
+**Specific Tasks for Replit Agent:**
+
+1.  **API Endpoint Change for Discovery:**
+    * **Remove** the manual entry form and the `manage_accounts.php` file's reliance on manual input.
+    * Modify `api.php` or create a new discovery function in `account_manager.php` to target the appropriate Facebook Marketing API endpoint for Ad Account discovery.
+    * **Target Endpoint Example (Assuming User Access Token):**
+        ```
+        [https://graph.facebook.com/v19.0/me/adaccounts?fields=name,account_status,id](https://graph.facebook.com/v19.0/me/adaccounts?fields=name,account_status,id)
+        ```
+    * **Alternative (If using Business Manager Token):**
+        ```
+        [https://graph.facebook.com/v19.0/](https://graph.facebook.com/v19.0/)<BUSINESS_MANAGER_ID>/owned_ad_accounts?fields=name,account_status,id
+        ```
+    * **Action:** The PHP code must fetch the **ID (`act_<id>`)** and **Name** of all linked Ad Accounts.
+
+2.  **Dynamic Account Listing & Switching:**
+    * The fetched list of Ad Accounts must be **stored temporarily** (e.g., in a PHP session or a local file during development) to populate the account selector.
+    * The `manage_accounts.php` or the main dashboard UI must display the **discovered list of Ad Accounts** (Name and ID).
+    * Implement the switching mechanism so that when an account is selected, the **Dashboard** is dynamically populated with data **only** from the selected `act_<id>`.
+
+3.  **Status Filtering:**
+    * In the final display (both the account list and the campaign overview), ensure the **`account_status`** and **`campaign_status`** fields are fetched and used to visually indicate if an account or campaign is **Active, Disabled, Pending Review, etc.** (This aligns with the requirements seen in the uploaded screenshot).
+
+**Start by modifying `account_manager.php` or `api.php` to show the necessary PHP `cURL` or API SDK code structure required to hit the `me/adaccounts` endpoint and parse the resulting list of Ad Account IDs and Names.**

@@ -97,4 +97,47 @@ class AccountManager {
         file_put_contents($this->accountsFile, json_encode($newAccounts, JSON_PRETTY_PRINT));
         return ['success' => $deleted];
     }
+    
+    public function syncDiscoveredAccounts($discoveredAccounts) {
+        $existingAccounts = $this->getAccounts();
+        $currentActiveId = null;
+        
+        foreach ($existingAccounts as $account) {
+            if ($account['active']) {
+                $currentActiveId = $account['id'];
+                break;
+            }
+        }
+        
+        $syncedAccounts = [];
+        $isFirstAccount = true;
+        
+        foreach ($discoveredAccounts as $discovered) {
+            $accountId = $discovered['id'];
+            $id = str_replace('act_', '', $accountId);
+            
+            $isActive = false;
+            if ($currentActiveId === $id) {
+                $isActive = true;
+            } elseif (empty($currentActiveId) && $isFirstAccount) {
+                $isActive = true;
+            }
+            
+            $syncedAccounts[] = [
+                'id' => $id,
+                'name' => $discovered['name'] ?? 'Ad Account ' . $id,
+                'account_id' => $accountId,
+                'account_status' => $discovered['account_status'] ?? 1,
+                'currency' => $discovered['currency'] ?? 'USD',
+                'timezone_name' => $discovered['timezone_name'] ?? '',
+                'business_name' => $discovered['business_name'] ?? '',
+                'active' => $isActive
+            ];
+            
+            $isFirstAccount = false;
+        }
+        
+        file_put_contents($this->accountsFile, json_encode($syncedAccounts, JSON_PRETTY_PRINT));
+        return ['success' => true, 'count' => count($syncedAccounts)];
+    }
 }
