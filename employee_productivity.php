@@ -50,24 +50,26 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 $campaigns = $api->getCampaignsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($campaigns['error'])) {
                     $productivityData[$accountId]['campaigns_created'] = count($campaigns);
-                    
-                    foreach ($campaigns as $campaign) {
-                        if (isset($campaign['lifetime_budget'])) {
-                            $productivityData[$accountId]['total_allocated_budget'] += $campaign['lifetime_budget'] / 100;
-                        } elseif (isset($campaign['daily_budget'])) {
-                            $productivityData[$accountId]['total_allocated_budget'] += ($campaign['daily_budget'] / 100) * 30;
-                        }
-                    }
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($adsets['error'])) {
                     $productivityData[$accountId]['adsets_created'] = count($adsets);
+                    
+                    foreach ($adsets as $adset) {
+                        $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset);
+                        $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
+                    }
                 }
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($ads['error'])) {
                     $productivityData[$accountId]['ads_created'] = count($ads);
+                    
+                    foreach ($ads as $ad) {
+                        $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($ad);
+                        $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
+                    }
                 }
             }
             
