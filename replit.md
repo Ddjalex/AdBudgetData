@@ -1,12 +1,12 @@
 # Facebook Ads Budget Tracker
 
 ## Overview
-A comprehensive PHP web application for tracking and analyzing Facebook advertising campaigns across **multiple Ad Accounts**. The application integrates with the Facebook Marketing API to automatically discover ad accounts and fetch real-time performance data, budget information, and provides detailed financial tracking with visual indicators.
+A comprehensive PHP web application for tracking and analyzing Facebook advertising campaigns across **multiple Ad Accounts**. The application integrates with the Facebook Marketing API to fetch real-time performance data and budget information for manually configured ad accounts, providing detailed financial tracking with visual indicators.
 
 ## Project Structure
 ```
 ├── index.php              # Main dashboard with multi-account support
-├── manage_accounts.php    # Ad Account auto-discovery interface
+├── manage_accounts.php    # Ad Account manual entry and management interface
 ├── settings.php           # API credentials configuration
 ├── config.php             # API configuration and credentials
 ├── api.php               # Facebook Marketing API integration class
@@ -18,15 +18,13 @@ A comprehensive PHP web application for tracking and analyzing Facebook advertis
 
 ## Key Features
 
-### Automatic Multi-Account Discovery
-- **Auto-Discovery**: Automatically discovers all Ad Accounts linked to your Facebook Access Token using the `/me/adaccounts` API endpoint
-- **Track 7+ Ad Accounts**: Manage and monitor unlimited Facebook Ad Accounts from a single dashboard
-- **One-Click Discovery**: Simply click "Discover Ad Accounts" to fetch all accessible accounts
-- **Account Status Tracking**: Displays account status (Active, Disabled, Pending Review, etc.) with color-coded badges
-- **Account Metadata**: Automatically retrieves account name, currency, timezone, and business information
-- **Smart Syncing**: Preserves your active account selection when re-discovering accounts
+### Manual Multi-Account Management
+- **Manual Account Entry**: Add multiple Ad Accounts by entering Account ID and a friendly name
+- **Track Unlimited Ad Accounts**: Manage and monitor unlimited Facebook Ad Accounts from a single dashboard
+- **Simple Account Addition**: Enter your Ad Account ID and a custom name to add new accounts
 - **Quick Account Switching**: Dropdown selector to switch between accounts instantly
 - **Account-Specific Data**: All metrics and reports are scoped to the selected Ad Account
+- **Easy Account Management**: Set active account, remove accounts, and manage all accounts from one interface
 
 ### Financial Tracking & KPIs
 - **Total Budget Card**: View total allocated budget across all campaigns
@@ -87,16 +85,15 @@ To get your Facebook API credentials:
 - Add the Marketing API product to your app
 - Generate an access token with required permissions
 
-### 2. Auto-Discover Your Ad Accounts
+### 2. Add Your Ad Accounts Manually
 1. Click the **Accounts** button in the dashboard
-2. Click the green "Discover Ad Accounts" button
-3. The system will automatically fetch all Ad Accounts linked to your access token
-4. All accounts will be displayed with their status, currency, timezone, and business information
+2. Find your Ad Account ID in Facebook Business Settings
+3. Enter the Account Name and Account ID in the form
+4. Click "Add Account" to save the account
 
 ### 3. Switch Between Accounts
-- Use the dropdown selector on the dashboard to switch between discovered accounts
+- Use the dropdown selector on the dashboard to switch between your manually added accounts
 - Or click "Set Active" on any account card in the Accounts page
-- Only accounts with "Active" status can be set as the active account
 
 ## API Integration Details
 
@@ -104,7 +101,6 @@ To get your Facebook API credentials:
 The application uses a custom PHP class to interact with the Facebook Marketing API:
 
 - `__construct($accountId)`: Initialize API with specific account ID
-- `discoverAdAccounts()`: Auto-discovers all Ad Accounts linked to the access token via `/me/adaccounts`
 - `getCampaigns()`: Fetches all campaigns with budget and spend data
 - `getAdSets($campaignId)`: Retrieves ad sets for a specific campaign
 - `getAds($adSetId)`: Gets ads for a specific ad set
@@ -118,13 +114,12 @@ Handles multi-account storage and management:
 
 - `getAccounts()`: Retrieve all configured accounts
 - `getActiveAccount()`: Get the currently active account
-- `addAccount($name, $accountId)`: Add a new account (legacy, now replaced by auto-discovery)
+- `addAccount($name, $accountId)`: Add a new account manually
 - `setActiveAccount($id)`: Switch to a different account
 - `deleteAccount($id)`: Remove an account
-- `syncDiscoveredAccounts($discoveredAccounts)`: Sync auto-discovered accounts from API
 
 ### Data Retrieved
-- **Account Level**: ID, name, status, currency, timezone, business name (via auto-discovery)
+- **Account Level**: ID, name (manually entered)
 - **Campaign Level**: ID, name, status, objective, budgets, spend, budget remaining
 - **Ad Set Level**: ID, name, status, budgets, spend, impressions, clicks
 - **Ad Level**: ID, name, status, creative information, daily spend metrics
@@ -132,12 +127,12 @@ Handles multi-account storage and management:
 
 ## Usage Guide
 
-### Auto-Discovering Accounts
+### Adding Accounts Manually
 1. Navigate to the Accounts page
-2. Click "Discover Ad Accounts"
-3. The system automatically fetches all accounts from Facebook
-4. View account status, currency, and business information
-5. Your previously active account selection is preserved
+2. Enter a friendly name for your account
+3. Enter your Ad Account ID (numbers only)
+4. Click "Add Account" to save
+5. The account will be added to your account list
 
 ### Switching Between Accounts
 1. Use the dropdown selector at the top of the dashboard
@@ -158,33 +153,24 @@ Handles multi-account storage and management:
 2. Each table shows relevant metrics and financial data
 3. Click on Ad IDs to view them directly in Facebook Ads Manager
 
-### Account Status Meanings
-- **Active (Green)**: Account is fully operational and can be used
-- **Disabled (Red)**: Account has been disabled and cannot be used
-- **Pending Review (Blue)**: Account is under review by Facebook
-- **Unsettled (Yellow)**: Account has outstanding payment issues
-- **Closed (Grey)**: Account has been permanently closed
-
 ## User Preferences
 - Pure PHP implementation without heavy frameworks
 - Clean, professional interface inspired by Facebook Ads Manager
 - Focus on financial tracking and budget management
 - Multi-account support for agencies and businesses
 - Hierarchical data organization (Campaign → Ad Set → Ad)
-- Automatic account discovery instead of manual entry
+- Manual account entry for full control and simplicity
 
 ## Recent Changes
-- **2025-11-07**: Automatic Ad Account Discovery Implementation (MAJOR UPDATE)
-  - **REMOVED** manual Ad Account entry form - no longer needed
-  - **ADDED** automatic account discovery via `/me/adaccounts` Facebook API endpoint
-  - **ADDED** `discoverAdAccounts()` method to FacebookAdsAPI class
-  - **ADDED** `syncDiscoveredAccounts()` method to AccountManager class
-  - **UPDATED** manage_accounts.php with auto-discovery UI and "Discover Ad Accounts" button
-  - **ADDED** account status badges (Active, Disabled, Pending Review, etc.) with color coding
-  - **ADDED** automatic retrieval of account metadata (currency, timezone, business name)
-  - **IMPROVED** account management with smart syncing that preserves active account selection
-  - **ENHANCED** UI with informational sections explaining auto-discovery process
-  - **ADDED** account status filtering - only Active accounts can be set as active
+- **2025-11-07**: Switched to Manual-Only Multi-Account Management (CRITICAL REVISION)
+  - **REMOVED** all auto-discovery logic and UI from the application
+  - **DELETED** `discoverAdAccounts()` method from FacebookAdsAPI class
+  - **DELETED** `syncDiscoveredAccounts()` method from AccountManager class
+  - **REMOVED** "Discover Ad Accounts" button and auto-discovery UI from manage_accounts.php
+  - **IMPLEMENTED** clean manual account entry form with Account Name and Account ID fields
+  - **UPDATED** `addAccount()` method to include default values for all account fields
+  - **SIMPLIFIED** account management to manual entry only
+  - **IMPROVED** user control over account management with straightforward manual addition
   
 - **2025-11-07**: Multi-Account Support & Enhanced Financial Tracking
   - Implemented multi-account management system supporting 7+ accounts
@@ -223,23 +209,18 @@ Handles multi-account storage and management:
 
 ## Troubleshooting
 
-### API Errors During Discovery
+### Cannot Add Account
+- Verify your Ad Account ID is correct (numbers only, e.g., 1234567890)
+- Check that you haven't already added this account
+- Make sure both Account Name and Account ID are filled in
+
+### API Errors When Loading Data
 - Verify your access token has `ads_read` and `ads_management` permissions
 - Ensure your access token hasn't expired (Facebook tokens expire regularly)
-- Check that you have access to at least one Ad Account in Facebook Business Settings
+- Check that the Ad Account ID you entered is correct and you have access to it
 - Verify your App ID and App Secret are correct in Settings
 
-### No Accounts Discovered
-- Confirm your access token is associated with a user or Business Manager that has Ad Accounts
-- Verify you have the correct permissions on the Ad Accounts
-- Check that your Facebook app has the Marketing API product enabled
-
 ### Account Not Switching
-- Only accounts with "Active" status can be set as active
 - Clear your browser cache and try again
 - Verify the account exists in the Manage Accounts page
-
-### Discovery Button Not Working
-- Check your API credentials in the Settings page
-- Verify your access token has not expired
-- Look for error messages displayed on the page after clicking "Discover Ad Accounts"
+- Try removing and re-adding the account if issues persist
