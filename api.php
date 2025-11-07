@@ -15,6 +15,10 @@ class FacebookAdsAPI {
     }
     
     private function makeRequest($endpoint, $params = []) {
+        if (empty($this->accessToken) || $this->accessToken === 'YOUR_ACCESS_TOKEN_HERE') {
+            return ['error' => 'Access token not configured'];
+        }
+        
         $params['access_token'] = $this->accessToken;
         $url = $this->apiBaseUrl . $endpoint . '?' . http_build_query($params);
         
@@ -22,7 +26,9 @@ class FacebookAdsAPI {
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('max_execution_time', 120);
 
 require_once 'config.php';
 require_once 'api.php';
@@ -15,16 +18,21 @@ $isConfigured = false;
 if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
     $isConfigured = true;
     
-    try {
-        $api = new FacebookAdsAPI($activeAccount['account_id']);
-        $data = $api->getAllData();
-        
-        if (isset($data['error'])) {
-            $errorMessage = $data['error'];
+    // Only load data if explicitly requested
+    if (isset($_GET['load_data']) && $_GET['load_data'] === '1') {
+        try {
+            set_time_limit(90);
+            $api = new FacebookAdsAPI($activeAccount['account_id']);
+            $data = $api->getAllData();
+            
+            if (isset($data['error'])) {
+                $errorMessage = $data['error'];
+                $data = null;
+            }
+        } catch (Exception $e) {
+            $errorMessage = 'Error: ' . $e->getMessage();
             $data = null;
         }
-    } catch (Exception $e) {
-        $errorMessage = 'Error: ' . $e->getMessage();
     }
 }
 
@@ -94,14 +102,30 @@ function getStatusBadge($status) {
             </div>
         <?php endif; ?>
 
+        <?php if ($isConfigured && $data === null && !isset($_GET['load_data'])): ?>
+            <div class="alert alert-info" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+                <strong>Ready to Load Data</strong><br>
+                Click the button below to load your Facebook Ads data from the active account.
+                <br><br>
+                <a href="?load_data=1" style="display: inline-block; background: #1877f2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    📊 Load Facebook Ads Data
+                </a>
+                <span style="margin-left: 15px; color: #0c5460; font-size: 14px;">(This may take 30-60 seconds)</span>
+            </div>
+        <?php endif; ?>
+
         <?php if ($errorMessage): ?>
             <div class="alert alert-error">
                 <strong>Error</strong><br>
                 <?php echo htmlspecialchars($errorMessage); ?>
+                <br><br>
+                <a href="/" style="display: inline-block; background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                    ← Back to Dashboard
+                </a>
             </div>
         <?php endif; ?>
 
-        <?php if ($isConfigured && !$errorMessage): ?>
+        <?php if ($isConfigured && $data !== null && !$errorMessage): ?>
             <?php
             $totalLifetimeSpend = 0;
             $totalTodaySpend = 0;

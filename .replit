@@ -18,24 +18,20 @@ args = "php-server"
 name = "php-server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "php -S 0.0.0.0:5000"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "php -S 0.0.0.0:5000 router.php"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 34343
-externalPort = 3000
-
-[[ports]]
-localPort = 34861
+localPort = 40523
 externalPort = 3002
 
 [[ports]]
