@@ -53,13 +53,13 @@ function getStatusBadge($status) {
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Facebook Ads Budget Tracker</h1>
+            <h1>Facebook Ads Budget Tracker</h1>
             <p>Track and analyze your Facebook advertising campaigns, ad sets, and ads in real-time</p>
         </div>
 
         <?php if (!$isConfigured): ?>
             <div class="alert alert-warning">
-                <strong>⚠️ Configuration Required</strong><br>
+                <strong>Configuration Required</strong><br>
                 Please update your Facebook API credentials in <code>config.php</code>:
                 <ul style="margin-top: 10px; margin-left: 20px;">
                     <li>FB_APP_ID</li>
@@ -72,12 +72,59 @@ function getStatusBadge($status) {
 
         <?php if ($errorMessage): ?>
             <div class="alert alert-error">
-                <strong>❌ Error</strong><br>
+                <strong>Error</strong><br>
                 <?php echo htmlspecialchars($errorMessage); ?>
             </div>
         <?php endif; ?>
 
         <?php if ($isConfigured && !$errorMessage): ?>
+            <?php
+            $totalLifetimeSpend = 0;
+            $totalTodaySpend = 0;
+            $totalCampaigns = isset($data['campaigns']) ? count($data['campaigns']) : 0;
+            $activeCampaigns = 0;
+            
+            if (isset($data['campaigns'])) {
+                foreach ($data['campaigns'] as $campaign) {
+                    if (isset($data['insights']['campaign'][$campaign['id']]['lifetime']['spend'])) {
+                        $totalLifetimeSpend += (float)$data['insights']['campaign'][$campaign['id']]['lifetime']['spend'];
+                    }
+                    if (isset($data['insights']['campaign'][$campaign['id']]['today']['spend'])) {
+                        $totalTodaySpend += (float)$data['insights']['campaign'][$campaign['id']]['today']['spend'];
+                    }
+                    if (strtolower($campaign['status']) === 'active') {
+                        $activeCampaigns++;
+                    }
+                }
+            }
+            ?>
+            
+            <div class="summary-cards-container">
+                <div class="summary-card spend">
+                    <div class="summary-card-title">Total Lifetime Spend</div>
+                    <div class="summary-card-value"><?php echo formatCurrency($totalLifetimeSpend); ?></div>
+                    <div class="summary-card-subtitle">Across all campaigns</div>
+                </div>
+                
+                <div class="summary-card today">
+                    <div class="summary-card-title">Today's Spend</div>
+                    <div class="summary-card-value"><?php echo formatCurrency($totalTodaySpend); ?></div>
+                    <div class="summary-card-subtitle">All active campaigns</div>
+                </div>
+                
+                <div class="summary-card campaigns">
+                    <div class="summary-card-title">Total Campaigns</div>
+                    <div class="summary-card-value"><?php echo $totalCampaigns; ?></div>
+                    <div class="summary-card-subtitle">In ad account</div>
+                </div>
+                
+                <div class="summary-card active">
+                    <div class="summary-card-title">Active Campaigns</div>
+                    <div class="summary-card-value"><?php echo $activeCampaigns; ?></div>
+                    <div class="summary-card-subtitle">Currently running</div>
+                </div>
+            </div>
+            
             <div class="nav-tabs">
                 <button class="tab-button active" onclick="showTab('campaigns')">Campaigns</button>
                 <button class="tab-button" onclick="showTab('adsets')">Ad Sets</button>
@@ -86,7 +133,7 @@ function getStatusBadge($status) {
 
             <div id="campaigns-tab" class="tab-content active">
                 <div class="data-section">
-                    <h2 class="section-title">📈 Campaigns Overview</h2>
+                    <h2 class="section-title">Campaigns Overview</h2>
                     
                     <?php if (isset($data['campaigns']) && count($data['campaigns']) > 0): ?>
                         <table class="data-table">
@@ -158,7 +205,6 @@ function getStatusBadge($status) {
                         </table>
                     <?php else: ?>
                         <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
                             <div class="empty-state-text">No campaigns found</div>
                             <p>Create campaigns in Facebook Ads Manager to see them here.</p>
                         </div>
@@ -168,7 +214,7 @@ function getStatusBadge($status) {
 
             <div id="adsets-tab" class="tab-content">
                 <div class="data-section">
-                    <h2 class="section-title">🎯 Ad Sets Overview</h2>
+                    <h2 class="section-title">Ad Sets Overview</h2>
                     
                     <?php if (isset($data['adsets']) && count($data['adsets']) > 0): ?>
                         <table class="data-table">
@@ -247,7 +293,6 @@ function getStatusBadge($status) {
                         </table>
                     <?php else: ?>
                         <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
                             <div class="empty-state-text">No ad sets found</div>
                             <p>Create ad sets in your campaigns to see them here.</p>
                         </div>
@@ -257,7 +302,7 @@ function getStatusBadge($status) {
 
             <div id="ads-tab" class="tab-content">
                 <div class="data-section">
-                    <h2 class="section-title">📱 Ads Overview</h2>
+                    <h2 class="section-title">Ads Overview</h2>
                     
                     <?php if (isset($data['ads']) && count($data['ads']) > 0): ?>
                         <table class="data-table">
@@ -331,7 +376,6 @@ function getStatusBadge($status) {
                         </table>
                     <?php else: ?>
                         <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
                             <div class="empty-state-text">No ads found</div>
                             <p>Create ads in your ad sets to see them here.</p>
                         </div>

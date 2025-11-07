@@ -1,0 +1,47 @@
+**UI Refinement and Modernization Task**
+
+The user is not satisfied with the current UI/UX and requests a complete redesign to achieve a **modern, professional dashboard look** that visually resembles the **Facebook Ads Manager or Facebook Business Suite**. The current design uses bright gradients, which must be replaced with a clean, white, card-based interface.
+
+**FILES TO MODIFY:**
+1.  **`style.css`**
+2.  **`index (5).php`** (To implement new structural elements like Summary Cards)
+
+---
+
+### **1. `style.css` - Complete Overhaul Instructions**
+
+Replace the existing CSS content with styles that adhere to the following modern design principles:
+
+* **Font:** Use a clean, system-default font stack (e.g., `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`).
+* **Body Background:** Change the background from the current `linear-gradient` to a soft, light grey: **`#f0f2f5`** (This mimics the Facebook Business Suite background).
+* **Header:**
+    * Set the background to **`white`**.
+    * Use a subtle, lighter box-shadow: `0 1px 3px rgba(0, 0, 0, 0.1)`.
+    * Add a visual accent: a **`border-left: 5px solid #1877f2;`** (Facebook Blue).
+* **Data Sections/Containers (Cards):**
+    * All main content areas (`.data-section`) must look like clean **"Cards"**.
+    * Background: **`white`**.
+    * Padding: `20px` to `25px`.
+    * Border Radius: `8px` or `10px`.
+    * Shadow: Use a multi-level, modern shadow: `0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)`.
+* **Tables (`.data-table`):**
+    * Use `border-collapse: collapse;` and remove outer borders.
+    * Add a light bottom border to rows: `1px solid #ebedf0;`.
+    * Table Header (`th`) background: **`#f7f9fa`** with dark grey text: **`#606770`**.
+    * Add a subtle hover effect to table rows (`tr:hover`).
+* **Status Badges:** Ensure the colors are corporate and clear (e.g., Active: light blue/dark blue text; Paused: light yellow/dark yellow text).
+
+### **2. `index (5).php` - Structural Changes**
+
+Implement a **Summary Card** section above the main data tables to display key metrics (Total Spend, Today's Spend, etc.) prominently.
+
+* **Create a PHP structure (using HTML) for Summary Cards:** Introduce a new `div` with the class **`summary-cards-container`** before the main content loop (where the data is displayed).
+* **Each metric should be in a `summary-card` class.**
+* **Logic Integration:** The agent must pull data from the existing `$data['insights']` array to populate these cards for demonstration (e.g., total spend for the highest-level entity, total today's spend).
+
+---
+
+**Task Execution:**
+1.  Apply the modern CSS changes to `style.css` immediately.
+2.  Modify `index (5).php` to introduce the required `summary-cards-container` and `summary-card` HTML structure with PHP logic to display the core metrics (e.g., total **lifetime spend** and total **today's spend**) before the main campaign table starts.
+3.  Ensure all classes used in the PHP file are defined in the new `style.css`."
