@@ -49,14 +49,20 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 
                 $campaigns = $api->getCampaignsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($campaigns['error'])) {
-                    $productivityData[$accountId]['campaigns_created'] = count($campaigns);
+                    $activeCampaigns = array_filter($campaigns, function($campaign) {
+                        return isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
+                    });
+                    $productivityData[$accountId]['campaigns_created'] = count($activeCampaigns);
                 }
                 
                 $adsets = $api->getAdSetsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($adsets['error'])) {
-                    $productivityData[$accountId]['adsets_created'] = count($adsets);
+                    $activeAdsets = array_filter($adsets, function($adset) {
+                        return isset($adset['effective_status']) && $adset['effective_status'] === 'ACTIVE';
+                    });
+                    $productivityData[$accountId]['adsets_created'] = count($activeAdsets);
                     
-                    foreach ($adsets as $adset) {
+                    foreach ($activeAdsets as $adset) {
                         $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset);
                         $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
                     }
@@ -64,7 +70,10 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
                 if (!isset($ads['error'])) {
-                    $productivityData[$accountId]['ads_created'] = count($ads);
+                    $activeAds = array_filter($ads, function($ad) {
+                        return isset($ad['effective_status']) && $ad['effective_status'] === 'ACTIVE';
+                    });
+                    $productivityData[$accountId]['ads_created'] = count($activeAds);
                 }
             }
             

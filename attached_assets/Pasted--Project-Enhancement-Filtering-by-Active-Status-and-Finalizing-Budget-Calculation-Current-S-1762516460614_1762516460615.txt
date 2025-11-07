@@ -1,0 +1,25 @@
+**Project Enhancement: Filtering by Active Status and Finalizing Budget Calculation**
+
+**Current Status:**
+The "Employee Productivity Report" now successfully groups data by Ad Account ID and displays creation counts (Campaigns, Ad Sets, Ads) for the selected time period (e.g., Today). However, two critical issues need resolution:
+1.  The report includes entities that are **not currently 'Active'** (e.g., Paused, Deleted).
+2.  The **Total Allocated Budget** field is incorrectly showing **$0.00**, indicating the advanced budget calculation logic (Daily Budget * Duration) is not yet implemented or functional.
+
+**CRITICAL LOGIC IMPLEMENTATION (Tasks for Replit Agent):**
+
+1.  **Filtering by Active Status:**
+    * **Goal:** Only include entities (Campaigns, Ad Sets, Ads) that were created within the time filter AND whose current Facebook status is **Active**.
+    * **API Logic:** Modify the API call and/or the PHP processing loop to filter results using the entity's **`effective_status`** field. Only entities where `effective_status` is equal to **'ACTIVE'** should be counted and included in the report calculation.
+    * **Note:** This filtering must be applied **after** confirming the entity's `created_time` falls within the user-selected date range.
+
+2.  **Implementing Total Allocated Budget Calculation:**
+    * The PHP logic must be finalized to correctly calculate the total allocated budget for **Active** entities created today (or within the selected time frame).
+    * **Budget Calculation Review:** Reconfirm the logic for each fetched entity (Ad Set or Ad):
+        * **IF `lifetime_budget` is present:** Use this value.
+        * **IF `daily_budget` is present:** Calculate the budget duration in days (from `start_time` to `end_time`, inclusive) and multiply: **Total Allocated Budget = `daily_budget` $\times$ Duration (in days)**.
+    * **PHP Data Conversion:** Ensure the budget value fetched from the API (which is typically returned in cents/smallest currency unit) is correctly divided by 100 and formatted as a dollar value (e.g., $150.50) before display.
+
+3.  **UI Feedback:**
+    * Update the report header to clearly indicate that only **Active** entities are being displayed (e.g., "Tracking 2 Ad Accounts | Showing Active Created Ads Only").
+
+**Start by providing the updated PHP function that fetches data, showing the inclusion of the `effective_status` filter in the API request and the finalized implementation of the `calculateTotalAllocatedBudget` function, including the duration calculation and currency conversion.**
