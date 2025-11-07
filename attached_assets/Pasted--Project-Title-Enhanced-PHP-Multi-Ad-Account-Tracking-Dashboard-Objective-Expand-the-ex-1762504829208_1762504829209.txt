@@ -1,0 +1,37 @@
+**Project Title: Enhanced PHP Multi-Ad Account Tracking Dashboard**
+
+**Objective:**
+Expand the existing PHP/HTML/CSS web application to serve as a **centralized dashboard for tracking budgets and performance across multiple Facebook Ad Accounts**. The system must facilitate easy addition of new Ad Accounts and provide granular reporting per account.
+
+**Key Requirements & Enhancements (Focus on Scalability):**
+
+1.  **Multi-Account Management Structure:**
+    * The application must support the management and tracking of **7+ distinct Facebook Ad Accounts**.
+    * A primary landing page or navigation must allow the user to select or switch between the registered Ad Accounts.
+
+2.  **Easy Ad Account Registration (Scalability):**
+    * Implement a mechanism (e.g., a simple HTML form backed by PHP logic) to **easily add new Ad Account IDs** (e.g., `act_1234567890`) to the system's tracking list (for persistent storage, initially use a simple **PHP array/file-based storage** structure until database integration is required).
+
+3.  **Granular Reporting per Ad Account:**
+    * When an Ad Account is selected, the application must fetch and display data **only** for that specific account.
+    * The data must still be broken down by the established hierarchy:
+        * `Campaign` level data.
+        * `Ad Set` level data.
+        * `Ad` level data (with daily and total spend).
+
+4.  **API Integration Specifics (URL Example):**
+    * All API calls must be scoped to the selected Ad Account ID.
+    * **Example API Endpoint Structure (to be used in PHP `cURL`):**
+        ```
+        [https://graph.facebook.com/v19.0/act](https://graph.facebook.com/v19.0/act)_<AD_ACCOUNT_ID>/campaigns?fields=name,budget,spend
+        ```
+    * The application must use the provided **App ID, App Secret, and Access Token** for authentication.
+
+**Replit Agent Tasks:**
+
+1.  **PHP Structure Update:** Modify the core PHP file (`index.php`) to include a function or class structure capable of storing and retrieving multiple Ad Account IDs.
+2.  **Account Selector UI:** Create a simple HTML element (e.g., a dropdown/select box or a list of buttons) on the homepage to allow the user to **select an Ad Account**.
+3.  **Scoped API Logic:** Write the PHP logic to dynamically insert the **selected Ad Account ID** into the Facebook Marketing API request URL before fetching the data.
+4.  **Data Filtering:** Ensure the reporting table (HTML/CSS) displays metrics **only for the campaigns/ads belonging to the currently selected Ad Account**.
+
+**Start by providing the updated `index.php` structure showing how multiple Ad Account IDs can be managed and how the selected ID is used in the API request setup.**
