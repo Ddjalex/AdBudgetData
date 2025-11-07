@@ -1,0 +1,37 @@
+**Project Title: Employee Productivity and Allocated Budget Tracker (PHP)**
+
+**Objective:**
+Develop an enhanced PHP/HTML/CSS dashboard focused on **employee productivity tracking** and the **total budget allocated** to newly created advertising entities (Campaigns, Ad Sets, Ads). The core difference from previous iterations is the focus on **Creation Metrics and Allocated Budget**, not spending/spent amount.
+
+**Key Requirements & Data Focus:**
+
+1.  **Metric Shift:** The primary data points to fetch and display are:
+    * **Number of Entities Created:** How many Campaigns, Ad Sets, and Ads were created.
+    * **Total Allocated Budget:** The sum of the budget set for these new entities.
+    * **Crucial:** The application MUST fetch the **`budget`** field (lifetime or daily budget set) and **NOT** the **`spend`** field.
+
+2.  **Employee Tracking (New Feature):**
+    * The system must track which **employee** created which entity. Since the Facebook API doesn't directly expose the "creator," the system must rely on **custom logic or a local mapping**.
+    * **Replit Task:** Create a simple **PHP array mapping** to simulate employee tracking (e.g., mapping specific Ad Accounts or Campaign IDs to an 'Employee Name').
+    * **Example PHP Structure:** `$employee_map = ['act_12345' => 'Employee A', 'act_67890' => 'Employee B'];`
+
+3.  **Time-Based Filtering:**
+    * Implement a UI filter and corresponding PHP API logic to fetch creation data based on specific time ranges:
+        * **Today**
+        * **Yesterday**
+        * **This Week**
+        * **Specific Date Range (Start Date and End Date)**
+
+4.  **API Integration Specifics (Creation and Budget):**
+    * Use the Facebook Marketing API to query entities and filter based on their **`time_range`** and **`time_increment`** (if needed for daily counts).
+    * Focus on fetching: `name`, `id`, `created_time`, and **`budget`** (or relevant budget fields).
+    * **API Filtering Logic:** Use the `filtering` parameter or the `time_range` parameter on the read edge (e.g., `/act_<ID>/campaigns`) to limit results based on the **`created_time`**.
+
+**Replit Agent Tasks:**
+
+1.  **Data Structure:** Implement the basic **Employee Mapping array** within the PHP code.
+2.  **UI Filter:** Create the necessary HTML for a **dropdown filter** allowing selection of "Today," "Yesterday," "This Week," and a simple date range input.
+3.  **API Logic with Time Filter:** Write the core PHP function that constructs the Facebook API URL. This function must dynamically adjust the `time_range` parameter based on the user's filter selection to track **creation date**, not run date.
+4.  **Reporting Table:** Create a report table that displays the aggregated data: **Employee Name, Total Ads Created (Count), and Total Allocated Budget (Sum)** for the selected time period.
+
+**Start by creating the basic HTML filter structure and the PHP function that determines the correct `time_range` values (`since` and `until`) to pass to the Facebook API based on the filter selection (Today/Yesterday/etc.).**
