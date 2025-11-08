@@ -1,0 +1,24 @@
+**FINAL CORRECTIVE ACTION: Implement Hierarchical Budget Lookup (Campaigns and Ad Sets)**
+
+**Objective:** Resolve the persistent '$0.00' Total Allocated Budget issue by implementing a two-tier (hierarchical) budget lookup logic. The code must prioritize finding budget data on the Ad Set, but fall back to the Campaign if the Ad Set budget is not set.
+
+**CRITICAL FIXES:**
+
+1.  **Linked Data Retrieval:**
+    * The PHP code must first successfully retrieve **all necessary Campaign data** (including budget and dates) created in the selected time period. This data must be stored and indexed by `Campaign ID`.
+    * Then, retrieve **all necessary Ad Set data** created in the selected time period.
+
+2.  **Budget Lookup Priority Logic (PHP Implementation):**
+    * The `calculateTotalAllocatedBudget()` function, when analyzing an Ad Set, must perform the following lookup sequence:
+
+        * **P1 (Ad Set Budget):** Check the current Ad Set's `lifetime_budget`, `daily_budget`, or generic `budget` fields.
+        * **P2 (Campaign Budget Fallback):** IF the Ad Set budget is NOT SET, use the `campaign_id` to look up the **stored budget information** of its parent Campaign.
+            * Use the Campaign's `lifetime_budget`, `daily_budget`, or `budget` data as the source for the Ad Set's allocated budget.
+
+    * **Calculation and Currency:** Apply the standard **Daily Budget $\times$ Duration** calculation (using the Campaign's or Ad Set's respective dates) and then divide the final sum by **100** for currency conversion.
+
+3.  **API Fields Verification:**
+    * Ensure both Campaign and Ad Set API calls are explicitly requesting the full suite of budget and date fields: **`budget`**, **`daily_budget`**, **`lifetime_budget`**, **`start_time`**, **`end_time`**, `status`, and `effective_status`.
+
+**Replit Agent Task:**
+Provide the revised PHP code structure demonstrating the implementation of the **P1 (Ad Set) $\rightarrow$ P2 (Campaign Fallback)** logic for budget retrieval. This is the final step required to fix the $0.00 display error.
