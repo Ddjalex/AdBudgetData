@@ -20,10 +20,8 @@ class FacebookAdsAPI {
         
         $params['access_token'] = $this->accessToken;
         
-        // Exponential Backoff: Retry up to 2 times with 5s, 10s delays
-        // Reduced retries to make "Stop Loading" more responsive
-        $maxRetries = 2;
-        $retryDelays = [5, 10]; // seconds
+        // No retries - fail fast to make "Stop Loading" work instantly
+        $maxRetries = 0;
         $attempt = 0;
         
         while ($attempt <= $maxRetries) {
@@ -103,9 +101,20 @@ class FacebookAdsAPI {
     public function getCampaigns() {
         $fields = 'id,name,effective_status,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
+        
+        // Only fetch ACTIVE campaigns to reduce API calls
+        $filtering = json_encode([
+            [
+                'field' => 'effective_status',
+                'operator' => 'IN',
+                'value' => ['ACTIVE']
+            ]
+        ]);
+        
         $params = [
             'fields' => $fields,
-            'limit' => 100
+            'filtering' => $filtering,
+            'limit' => 25  // Reduced from 100 to prevent rate limits
         ];
         
         return $this->makeRequest($endpoint, $params);
