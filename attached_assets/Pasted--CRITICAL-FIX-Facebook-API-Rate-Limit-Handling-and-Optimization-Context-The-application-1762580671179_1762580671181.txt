@@ -1,0 +1,23 @@
+**CRITICAL FIX: Facebook API Rate Limit Handling and Optimization**
+
+**Context:**
+The application is frequently hitting the "Facebook API Rate Limit Reached" error, even after waiting a reasonable amount of time. This suggests the API calls are either too numerous or not properly handling Facebook's error responses and retrying logic.
+
+**GOAL:** Implement robust error handling and optimization techniques to prevent hitting the rate limit and ensure reliable data fetching.
+
+**IMPLEMENTATION STEPS:**
+
+1.  **Implement Exponential Backoff (Error Handling):**
+    * When a Facebook API call returns an error indicating a **Rate Limit reached (HTTP Status 400 or specific API error code 4 or 17)**, the PHP function must **pause** before retrying the same request.
+    * **Task:** Implement a retry mechanism with **Exponential Backoff**. The function should wait for 10 seconds, then 20 seconds, and then 40 seconds (up to 3 retries total) before giving up and displaying the error.
+    * **Crucial:** Use the Facebook API's response headers (if available) to read the exact time to wait (`X-Business-Use-Case-Usage` headers), but use the exponential backoff as a reliable fallback.
+
+2.  **Optimize API Call Fields (Efficiency):**
+    * Review the `fields` parameter in all API calls (Campaigns, Ad Sets, Ads).
+    * **Task:** Remove any unnecessary fields. Only request the absolute minimum required fields: `name`, `id`, `created_time`, `effective_status`, `budget`, `daily_budget`, `lifetime_budget`, `start_time`, and `end_time`. (Removing extra fields reduces the data payload and can marginally help with rate limits).
+
+3.  **Refine Time Range Querying:**
+    * **Task:** Ensure the time range for API queries uses the **smallest necessary window**. For 'Today', use `time_range={'since': 'Y-m-d', 'until': 'Y-m-d'}` where the date is today's date, avoiding wide, open-ended queries.
+
+**Replit Agent Task:**
+Provide the revised PHP code block for the main API calling function (e.g., `makeApiCall($endpoint, $params)`). This function must include the new **Error Handling and Retry Logic with Exponential Backoff** to manage the rate limit error gracefully.

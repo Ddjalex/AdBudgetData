@@ -20,38 +20,79 @@ class FacebookAdsAPI {
         }
         
         $params['access_token'] = $this->accessToken;
-        $url = $this->apiBaseUrl . $endpoint . '?' . http_build_query($params);
         
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+        // Exponential Backoff: Retry up to 3 times with 10s, 20s, 40s delays
+        $maxRetries = 3;
+        $retryDelays = [10, 20, 40]; // seconds
+        $attempt = 0;
         
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        
-        if (curl_errno($ch)) {
-            $error = curl_error($ch);
+        while ($attempt <= $maxRetries) {
+            $url = $this->apiBaseUrl . $endpoint . '?' . http_build_query($params);
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+            curl_setopt($ch, CURLOPT_HEADER, true); // Get headers for rate limit info
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            
+            if (curl_errno($ch)) {
+                $error = curl_error($ch);
+                curl_close($ch);
+                return ['error' => 'cURL Error: ' . $error];
+            }
+            
             curl_close($ch);
-            return ['error' => 'cURL Error: ' . $error];
-        }
-        
-        curl_close($ch);
-        
-        $data = json_decode($response, true);
-        
-        if ($httpCode !== 200) {
+            
+            // Separate headers and body
+            $headers = substr($response, 0, $headerSize);
+            $body = substr($response, $headerSize);
+            $data = json_decode($body, true);
+            
+            // Success - return data
+            if ($httpCode === 200) {
+                return $data;
+            }
+            
+            // Check if this is a rate limit error
+            $isRateLimitError = false;
+            if ($httpCode === 400 && isset($data['error'])) {
+                $errorCode = $data['error']['code'] ?? 0;
+                $errorMessage = $data['error']['message'] ?? '';
+                
+                // Facebook Rate Limit Error Codes: 4, 17, 32, 613
+                if (in_array($errorCode, [4, 17, 32, 613]) || 
+                    strpos($errorMessage, 'User request limit reached') !== false ||
+                    strpos($errorMessage, 'rate limit') !== false) {
+                    $isRateLimitError = true;
+                }
+            }
+            
+            // If rate limit error and retries remaining, wait and retry
+            if ($isRateLimitError && $attempt < $maxRetries) {
+                $waitTime = $retryDelays[$attempt];
+                error_log("Facebook API Rate Limit hit. Waiting {$waitTime} seconds before retry attempt " . ($attempt + 2) . "...");
+                sleep($waitTime);
+                $attempt++;
+                continue;
+            }
+            
+            // Non-rate-limit error or out of retries - return error
             return ['error' => 'API Error: ' . ($data['error']['message'] ?? 'Unknown error')];
         }
         
-        return $data;
+        // All retries exhausted
+        return ['error' => 'User request limit reached. Please wait 15-30 minutes before trying again.'];
     }
     
     public function getCampaigns() {
-        $fields = 'id,name,status,objective,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $fields = 'id,name,effective_status,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         $params = [
             'fields' => $fields,
@@ -81,7 +122,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdSets($campaignId = null) {
-        $fields = 'id,name,status,campaign_id,budget,daily_budget,lifetime_budget,created_time,start_time,end_time';
+        $fields = 'id,name,effective_status,campaign_id,budget,daily_budget,lifetime_budget,created_time,start_time,end_time';
         
         if ($campaignId) {
             $endpoint = "/{$campaignId}/adsets";
@@ -98,7 +139,7 @@ class FacebookAdsAPI {
     }
     
     public function getAds($adSetId = null) {
-        $fields = 'id,name,status,adset_id,creative{id,name},created_time';
+        $fields = 'id,name,effective_status,adset_id,created_time';
         
         if ($adSetId) {
             $endpoint = "/{$adSetId}/ads";
@@ -227,7 +268,7 @@ class FacebookAdsAPI {
     }
     
     public function getCampaignsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,effective_status,objective,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
+        $fields = 'id,name,effective_status,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         
         $filtering = json_encode([
@@ -254,7 +295,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdSetsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,effective_status,campaign_id,budget,daily_budget,lifetime_budget,budget_remaining,created_time,start_time,end_time';
+        $fields = 'id,name,effective_status,campaign_id,budget,daily_budget,lifetime_budget,created_time,start_time,end_time';
         $endpoint = "/{$this->adAccountId}/adsets";
         
         $filtering = json_encode([
@@ -281,7 +322,7 @@ class FacebookAdsAPI {
     }
     
     public function getAdsCreatedInRange($since, $until) {
-        $fields = 'id,name,status,effective_status,adset_id,adset{daily_budget,lifetime_budget,start_time,end_time},creative{id,name},created_time';
+        $fields = 'id,name,effective_status,adset_id,created_time';
         $endpoint = "/{$this->adAccountId}/ads";
         
         $filtering = json_encode([
