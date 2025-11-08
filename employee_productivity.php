@@ -47,6 +47,23 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                 
                 $api = new FacebookAdsAPI($accountId);
                 
+                // CRITICAL FIX: Fetch ALL campaigns first to build complete campaign map for budget hierarchy
+                // This ensures ad sets can always find their parent campaign, even if the campaign is older
+                $allCampaignsResponse = $api->getCampaigns();
+                $campaignMap = [];
+                
+                if (isset($allCampaignsResponse['error']) && strpos($allCampaignsResponse['error'], 'User request limit reached') !== false) {
+                    $errorMessage = "⚠️ Facebook API Rate Limit Reached! Please wait 15-30 minutes before trying again. Facebook limits how many requests you can make per hour. Try selecting a narrower time period (Today, Yesterday, This Week) instead of All Time to reduce the number of API calls.";
+                    break;
+                }
+                
+                if (!isset($allCampaignsResponse['error']) && isset($allCampaignsResponse['data'])) {
+                    foreach ($allCampaignsResponse['data'] as $campaign) {
+                        $campaignMap[$campaign['id']] = $campaign;
+                    }
+                }
+                
+                // Now fetch campaigns created in the time range for counting
                 $campaigns = $api->getCampaignsCreatedInRange($timeRange['since'], $timeRange['until']);
                 
                 if (isset($campaigns['error']) && strpos($campaigns['error'], 'User request limit reached') !== false) {
@@ -54,13 +71,7 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                     break;
                 }
                 
-                // Build campaign lookup map for hierarchical budget lookup
-                $campaignMap = [];
                 if (!isset($campaigns['error']) && is_array($campaigns)) {
-                    foreach ($campaigns as $campaign) {
-                        $campaignMap[$campaign['id']] = $campaign;
-                    }
-                    
                     $activeCampaigns = array_filter($campaigns, function($campaign) {
                         return isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
                     });

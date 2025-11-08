@@ -1,0 +1,31 @@
+**FINAL CRITICAL FIXES: Budget Hierarchy and API Rate Limit Control**
+
+**Context:**
+Despite multiple attempts, the 'Total Allocated Budget' remains at **$0.00**. This is due to a failure to correctly implement the hierarchical budget lookup logic (P1: Ad Set -> P2: Campaign). Additionally, the application frequently hits the **API Rate Limit**.
+
+**GOAL:** Implement the correct budget hierarchy and robust API rate limit control in one comprehensive update.
+
+---
+
+### 1. 💰 Budget Calculation Finalization (Hierarchy Fix)
+
+**Task:** Implement the P1/P2 budget lookup logic to resolve the $0.00 error.
+
+* **Logic:** When checking an Ad Set, the code must first check the Ad Set for budget data. If the Ad Set budget is not set, it **MUST** fall back and use the budget data from its **Parent Campaign** (linked via `campaign_id`).
+* **API Field Verification:** Ensure all calls request `budget`, `daily_budget`, `lifetime_budget`, `start_time`, and `end_time` for both Campaigns and Ad Sets.
+* **Calculation:** Apply the Daily Budget * Duration logic or use Lifetime Budget, and finally divide by 100 for currency conversion.
+
+---
+
+### 2. ⏳ API Rate Limit Handling
+
+**Task:** Implement error control to prevent the frequent Rate Limit errors.
+
+* **Error Check:** Modify the main API call function to specifically check for Facebook's Rate Limit error codes (e.g., Error 4 or 17, or HTTP 400 status with specific error message).
+* **Exponential Backoff:** When the Rate Limit error is detected, the PHP script must pause and implement a retry mechanism. Wait for 10 seconds, then 20 seconds, and then 40 seconds (up to 3 retries) before terminating the process with an error message.
+* **Efficiency:** Ensure the `fields` parameter remains minimal to reduce API call weight.
+
+---
+
+**Replit Agent Task:**
+Provide the complete and unified PHP code that integrates the **Hierarchical Budget Lookup** logic with the **Exponential Backoff Rate Limit control**. This solution must guarantee that the budget is correctly calculated when data is available on either the Ad Set or the linked Campaign entity.
