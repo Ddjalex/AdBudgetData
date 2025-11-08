@@ -243,7 +243,8 @@ function formatDate($dateString) {
                         $totalBudget += ($campaign['daily_budget'] / 100) * 30;
                     }
                     
-                    if (strtolower($campaign['status']) === 'active') {
+                    $campaignStatus = $campaign['effective_status'] ?? $campaign['status'] ?? '';
+                    if (strtolower($campaignStatus) === 'active') {
                         $activeCampaigns++;
                     }
                 }
@@ -368,7 +369,7 @@ function formatDate($dateString) {
                                 <?php foreach ($data['campaigns'] as $campaign): ?>
                                     <tr>
                                         <td><strong><?php echo htmlspecialchars($campaign['name']); ?></strong></td>
-                                        <td><?php echo getStatusBadge($campaign['status']); ?></td>
+                                        <td><?php echo getStatusBadge($campaign['effective_status'] ?? $campaign['status'] ?? ''); ?></td>
                                         <td><?php echo htmlspecialchars($campaign['objective'] ?? 'N/A'); ?></td>
                                         <td><?php echo formatDate($campaign['start_time'] ?? ''); ?></td>
                                         <td>
@@ -431,7 +432,8 @@ function formatDate($dateString) {
                                                 : 0;
                                             $dailyBudget = isset($campaign['daily_budget']) ? $campaign['daily_budget'] / 100 : 0;
                                             $unallocated = $dailyBudget - $todaySpend;
-                                            if ($dailyBudget > 0 && strtolower($campaign['status']) === 'active') {
+                                            $campaignStatus = $campaign['effective_status'] ?? $campaign['status'] ?? '';
+                                            if ($dailyBudget > 0 && strtolower($campaignStatus) === 'active') {
                                                 $color = $unallocated > 0 ? '#28a745' : '#dc3545';
                                                 echo '<span style="color: ' . $color . '; font-weight: 600;">' . formatCurrency($unallocated) . '</span>';
                                             } else {
