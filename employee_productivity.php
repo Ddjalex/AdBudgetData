@@ -74,104 +74,26 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && !empty($allAccounts)) {
                     break;
                 }
                 
-                echo "<div style='background: #fffbcc; border: 2px solid #ffeb3b; padding: 15px; margin: 10px 0; border-radius: 8px;'>";
-                echo "<h3 style='color: #ff6b00;'>🔍 DEBUG: API Response for Ad Sets</h3>";
-                echo "<strong>Account ID:</strong> " . htmlspecialchars($accountId) . "<br>";
-                echo "<strong>Time Range:</strong> " . htmlspecialchars($timeRange['since']) . " to " . htmlspecialchars($timeRange['until']) . "<br>";
-                echo "<strong>Raw API Response:</strong><pre style='background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;'>" . htmlspecialchars(print_r($adsets, true)) . "</pre>";
-                echo "</div>";
-                
                 if (!isset($adsets['error']) && is_array($adsets)) {
                     $activeAdsets = array_filter($adsets, function($adset) {
                         return isset($adset['effective_status']) && $adset['effective_status'] === 'ACTIVE';
                     });
                     $productivityData[$accountId]['adsets_created'] = count($activeAdsets);
                     
-                    echo "<div style='background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; margin: 10px 0; border-radius: 8px;'>";
-                    echo "<h3 style='color: #1976d2;'>💰 DEBUG: Budget Calculation</h3>";
-                    echo "<strong>Total Active Ad Sets:</strong> " . count($activeAdsets) . "<br><br>";
-                    
-                    foreach ($activeAdsets as $index => $adset) {
-                        echo "<div style='background: #fff; padding: 10px; margin: 10px 0; border-left: 4px solid #2196f3;'>";
-                        echo "<strong>Ad Set #" . ($index + 1) . ":</strong> " . htmlspecialchars($adset['name'] ?? 'N/A') . "<br>";
-                        echo "<strong>ID:</strong> " . htmlspecialchars($adset['id']) . "<br>";
-                        echo "<strong>Campaign ID:</strong> " . htmlspecialchars($adset['campaign_id'] ?? 'NOT SET') . "<br>";
-                        
+                    foreach ($activeAdsets as $adset) {
                         // Get parent campaign for hierarchical budget lookup
                         $parentCampaign = null;
                         if (isset($adset['campaign_id']) && isset($campaignMap[$adset['campaign_id']])) {
                             $parentCampaign = $campaignMap[$adset['campaign_id']];
-                            echo "<strong>Parent Campaign:</strong> " . htmlspecialchars($parentCampaign['name'] ?? 'N/A') . "<br>";
-                        }
-                        
-                        $lifetimeBudget = isset($adset['lifetime_budget']) ? floatval($adset['lifetime_budget']) : 0;
-                        $dailyBudget = isset($adset['daily_budget']) ? floatval($adset['daily_budget']) : 0;
-                        
-                        echo "<strong>Ad Set Lifetime Budget (raw):</strong> " . ($lifetimeBudget > 0 ? $lifetimeBudget . " cents" : "NOT SET") . "<br>";
-                        echo "<strong>Ad Set Daily Budget (raw):</strong> " . ($dailyBudget > 0 ? $dailyBudget . " cents" : "NOT SET") . "<br>";
-                        echo "<strong>Start Time:</strong> " . htmlspecialchars($adset['start_time'] ?? 'NOT SET') . "<br>";
-                        echo "<strong>End Time:</strong> " . htmlspecialchars($adset['end_time'] ?? 'NOT SET') . "<br>";
-                        
-                        // Display parent campaign budget info if no ad set budget
-                        if ($lifetimeBudget <= 0 && $dailyBudget <= 0 && $parentCampaign) {
-                            $campaignLifetime = isset($parentCampaign['lifetime_budget']) ? floatval($parentCampaign['lifetime_budget']) : 0;
-                            $campaignDaily = isset($parentCampaign['daily_budget']) ? floatval($parentCampaign['daily_budget']) : 0;
-                            echo "<br><strong style='color: #ff6b00;'>⬆️ CHECKING PARENT CAMPAIGN BUDGET:</strong><br>";
-                            echo "<strong>Campaign Lifetime Budget:</strong> " . ($campaignLifetime > 0 ? $campaignLifetime . " cents" : "NOT SET") . "<br>";
-                            echo "<strong>Campaign Daily Budget:</strong> " . ($campaignDaily > 0 ? $campaignDaily . " cents" : "NOT SET") . "<br>";
-                        }
-                        
-                        if ($lifetimeBudget > 0) {
-                            $budgetUSD = $lifetimeBudget / 100;
-                            echo "<strong style='color: green;'>✓ P1: Using Ad Set Lifetime Budget: $" . number_format($budgetUSD, 2) . "</strong><br>";
-                        } elseif ($dailyBudget > 0) {
-                            $dailyBudgetUSD = $dailyBudget / 100;
-                            echo "<strong>Daily Budget (USD):</strong> $" . number_format($dailyBudgetUSD, 2) . "<br>";
-                            
-                            $startTime = isset($adset['start_time']) ? strtotime($adset['start_time']) : null;
-                            $endTime = isset($adset['end_time']) ? strtotime($adset['end_time']) : null;
-                            
-                            if ($startTime && $endTime && $endTime > $startTime) {
-                                $durationSeconds = $endTime - $startTime;
-                                $durationDays = max(1, ceil($durationSeconds / 86400));
-                                $allocatedBudget = $dailyBudgetUSD * $durationDays;
-                                echo "<strong>Duration:</strong> $durationDays days<br>";
-                                echo "<strong style='color: green;'>✓ P1: Calculated Ad Set Daily Budget: $" . number_format($allocatedBudget, 2) . " ($" . number_format($dailyBudgetUSD, 2) . " × $durationDays days)</strong><br>";
-                            } elseif ($startTime) {
-                                $currentTime = time();
-                                $durationSeconds = $currentTime - $startTime;
-                                $durationDays = max(1, ceil($durationSeconds / 86400));
-                                $allocatedBudget = $dailyBudgetUSD * $durationDays;
-                                echo "<strong>Duration (ongoing):</strong> $durationDays days<br>";
-                                echo "<strong style='color: green;'>✓ P1: Calculated Ad Set Budget (ongoing): $" . number_format($allocatedBudget, 2) . "</strong><br>";
-                            } else {
-                                echo "<strong style='color: red;'>⚠ No start_time - using 30 day fallback</strong><br>";
-                            }
-                        } else {
-                            echo "<strong style='color: orange;'>⚠ NO AD SET BUDGET - Checking Parent Campaign...</strong><br>";
                         }
                         
                         // Hierarchical budget calculation with parent campaign
                         $allocatedBudget = FacebookAdsAPI::calculateTotalAllocatedBudget($adset, $parentCampaign);
-                        echo "<strong style='color: #1976d2; font-size: 16px;'>🎯 FINAL CALCULATED BUDGET: $" . number_format($allocatedBudget, 2) . "</strong><br>";
-                        
-                        if ($allocatedBudget > 0 && $lifetimeBudget <= 0 && $dailyBudget <= 0) {
-                            echo "<strong style='color: green; font-size: 14px;'>✓ P2: Budget inherited from Parent Campaign</strong><br>";
-                        } elseif ($allocatedBudget <= 0) {
-                            echo "<strong style='color: red; font-size: 14px;'>⚠ P3: No budget found (Ad Set or Campaign)</strong><br>";
-                        }
-                        
-                        echo "</div>";
                         
                         if ($allocatedBudget > 0) {
                             $productivityData[$accountId]['total_allocated_budget'] += $allocatedBudget;
                         }
                     }
-                    
-                    echo "<div style='background: #4caf50; color: white; padding: 10px; margin-top: 10px; border-radius: 4px;'>";
-                    echo "<strong>TOTAL ALLOCATED BUDGET FOR THIS ACCOUNT: $" . number_format($productivityData[$accountId]['total_allocated_budget'], 2) . "</strong>";
-                    echo "</div>";
-                    echo "</div>";
                 }
                 
                 $ads = $api->getAdsCreatedInRange($timeRange['since'], $timeRange['until']);
