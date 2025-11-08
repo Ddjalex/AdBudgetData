@@ -280,9 +280,12 @@ function formatCurrency($amount) {
                             </div>
                         </div>
                         
-                        <div>
-                            <button type="submit" id="loadBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" id="loadBtn" style="background: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
                                 📊 Load Productivity Data
+                            </button>
+                            <button type="button" id="stopLoadBtn" onclick="stopLoading()" style="display: none; background: #dc3545; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
+                                ⛔ Stop Loading
                             </button>
                         </div>
                     </div>
@@ -290,11 +293,13 @@ function formatCurrency($amount) {
                 
                 <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
                     <strong>⏳ Loading data from Facebook...</strong><br>
-                    Please wait, this may take up to 60 seconds. Do not refresh the page.
+                    This may take up to 60 seconds. You can click "Stop Loading" to cancel and change the time period.
                 </div>
             </div>
 
             <script>
+            let loadingAborted = false;
+            
             function toggleDateRange() {
                 const select = document.getElementById('filterSelect');
                 const dateRange = document.getElementById('dateRangeInputs');
@@ -305,11 +310,31 @@ function formatCurrency($amount) {
                 }
             }
             
-            function showLoading() {
-                document.getElementById('loadBtn').style.opacity = '0.5';
-                document.getElementById('loadBtn').style.pointerEvents = 'none';
+            document.getElementById('filterForm').addEventListener('submit', function(e) {
+                loadingAborted = false;
+                document.getElementById('loadBtn').style.display = 'none';
+                document.getElementById('stopLoadBtn').style.display = 'inline-block';
                 document.getElementById('loadingMessage').style.display = 'block';
+            });
+            
+            function stopLoading() {
+                loadingAborted = true;
+                window.stop();
+                
+                document.getElementById('loadBtn').style.display = 'inline-block';
+                document.getElementById('stopLoadBtn').style.display = 'none';
+                document.getElementById('loadingMessage').style.display = 'none';
+                
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('load_data');
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
             }
+            
+            window.addEventListener('load', function() {
+                document.getElementById('loadBtn').style.display = 'inline-block';
+                document.getElementById('stopLoadBtn').style.display = 'none';
+                document.getElementById('loadingMessage').style.display = 'none';
+            });
             </script>
         <?php endif; ?>
 

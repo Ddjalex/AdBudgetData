@@ -1,0 +1,31 @@
+**FINAL CRITICAL FIXES: Data Reliability and Budget Calculation**
+
+**Context:**
+The application is experiencing two major, intertwined issues:
+1. **Budget Error:** The 'Total Allocated Budget' remains at **$0.00** due to incorrect hierarchical budget lookup (P1: Ad Set -> P2: Campaign).
+2. **Performance/Rate Limit:** Data fetching is now extremely slow or results in a **Rate Limit error** (even for 'Yesterday' or 'Today'), preventing the display of data that previously loaded quickly.
+
+**GOAL:** Implement the hierarchical budget logic and drastically optimize API calls to ensure quick, reliable data retrieval without hitting limits.
+
+---
+
+### 1. 💰 Budget Calculation Finalization (Hierarchy Fix)
+
+**Task:** Implement the P1/P2 budget lookup logic to resolve the $0.00 error.
+
+* **Logic:** When processing an Ad Set, the code must first check the Ad Set itself for budget data. If the budget is not found, it **MUST** fall back and look up the budget data on the **Parent Campaign** (linked via `campaign_id`).
+* **Calculation:** Apply the Daily Budget * Duration logic or use Lifetime Budget, and finally divide by 100 for currency conversion.
+
+---
+
+### 2. ⚡️ API Optimization and Reliability (Fixing Slow/Missing Data)
+
+**Task:** Optimize API calls to be lighter and implement robust error handling.
+
+* **API Endpoint Optimization:** Review all API calls (Campaigns, Ad Sets, Ads) to request only the absolute minimum required fields.
+    * **Crucial Fields:** `id`, `name`, `created_time`, `effective_status`, `budget`, `daily_budget`, `lifetime_budget`, `start_time`, and `end_time`. (Remove any other fields that were added during previous debugging).
+* **Exponential Backoff:** The main API calling function must maintain the **Exponential Backoff retry mechanism** (wait 10s, 20s, 40s) when an API error or timeout occurs. This will allow the application to recover gracefully instead of breaking immediately.
+* **Loading State/Timeout:** Ensure the **Loading Data from Facebook...** message remains visible for up to **60 seconds** as currently configured, but use the `exponential backoff` to handle the wait time internally within that window.
+
+**Replit Agent Task:**
+Provide the complete, revised PHP code structure demonstrating the implementation of the **Hierarchical Budget Lookup** logic combined with the **Optimized API Fields and Exponential Backoff** for reliable data fetching.
