@@ -8,10 +8,9 @@ class FacebookAdsAPI {
     private $adAccountId;
     
     public function __construct($accountId = null) {
-        $config = getConfig();
-        $this->accessToken = $config['access_token'];
-        $this->apiBaseUrl = $config['api_base_url'];
-        $this->adAccountId = $accountId ?? $config['ad_account_id'];
+        $this->accessToken = FB_ACCESS_TOKEN;
+        $this->apiBaseUrl = 'https://graph.facebook.com/' . FB_API_VERSION;
+        $this->adAccountId = $accountId;
     }
     
     private function makeRequest($endpoint, $params = []) {
