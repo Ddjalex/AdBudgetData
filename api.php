@@ -20,9 +20,10 @@ class FacebookAdsAPI {
         
         $params['access_token'] = $this->accessToken;
         
-        // Exponential Backoff: Retry up to 3 times with 10s, 20s, 40s delays
-        $maxRetries = 3;
-        $retryDelays = [10, 20, 40]; // seconds
+        // Exponential Backoff: Retry up to 2 times with 5s, 10s delays
+        // Reduced retries to make "Stop Loading" more responsive
+        $maxRetries = 2;
+        $retryDelays = [5, 10]; // seconds
         $attempt = 0;
         
         while ($attempt <= $maxRetries) {

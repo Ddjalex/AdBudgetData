@@ -195,16 +195,10 @@ function formatDate($dateString) {
             });
             
             function stopLoading() {
-                loadingAborted = true;
-                window.stop();
-                
-                document.getElementById('loadDataBtn').style.display = 'inline-block';
-                document.getElementById('stopLoadBtn').style.display = 'none';
-                document.getElementById('loadingMessage').style.display = 'none';
-                
+                // Navigate to the page without load_data parameter to force connection close
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.delete('load_data');
-                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                window.location.href = currentUrl.pathname + currentUrl.search;
             }
             
             window.addEventListener('load', function() {
