@@ -77,7 +77,16 @@ class FacebookAdsAPI {
             if ($isRateLimitError && $attempt < $maxRetries) {
                 $waitTime = $retryDelays[$attempt];
                 error_log("Facebook API Rate Limit hit. Waiting {$waitTime} seconds before retry attempt " . ($attempt + 2) . "...");
-                sleep($waitTime);
+                
+                // Check connection abort every second during the wait
+                for ($i = 0; $i < $waitTime; $i++) {
+                    if (connection_aborted()) {
+                        error_log("Connection aborted during retry wait. Stopping API requests.");
+                        exit;
+                    }
+                    sleep(1);
+                }
+                
                 $attempt++;
                 continue;
             }
@@ -212,17 +221,29 @@ class FacebookAdsAPI {
         
         if (isset($campaigns['data'])) {
             foreach ($campaigns['data'] as $campaign) {
+                if (connection_aborted()) {
+                    exit;
+                }
+                
                 $data['campaigns'][] = $campaign;
                 
                 // OPTIMIZATION: Skip insights for PAUSED/DELETED campaigns to reduce API calls
                 $isActive = isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
                 
                 if ($isActive) {
+                    if (connection_aborted()) {
+                        exit;
+                    }
+                    
                     // OPTIMIZATION: Only fetch campaign-level insights to reduce API calls by 80-90%
                     // This prevents rate limits while maintaining budget tracking functionality
                     $campaignLifetimeInsights = $this->getCampaignInsights($campaign['id'], 'lifetime', $dateSince, $dateUntil);
                     if (isset($campaignLifetimeInsights['data'][0])) {
                         $data['insights']['campaign'][$campaign['id']]['lifetime'] = $campaignLifetimeInsights['data'][0];
+                    }
+                    
+                    if (connection_aborted()) {
+                        exit;
                     }
                     
                     $campaignTodayInsights = $this->getCampaignInsights($campaign['id'], 'today', $dateSince, $dateUntil);
@@ -231,10 +252,18 @@ class FacebookAdsAPI {
                     }
                 }
                 
+                if (connection_aborted()) {
+                    exit;
+                }
+                
                 // Fetch ad sets structure (no insights - saves 2 API calls per ad set)
                 $adsets = $this->getAdSets($campaign['id']);
                 if (isset($adsets['data'])) {
                     foreach ($adsets['data'] as $adset) {
+                        if (connection_aborted()) {
+                            exit;
+                        }
+                        
                         $adset['campaign_name'] = $campaign['name'];
                         $data['adsets'][] = $adset;
                         

@@ -30,8 +30,14 @@ if (FB_ACCESS_TOKEN !== 'YOUR_ACCESS_TOKEN_HERE' && $activeAccount) {
     if (isset($_GET['load_data']) && $_GET['load_data'] === '1') {
         try {
             set_time_limit(90);
+            ignore_user_abort(false);
+            
             $api = new FacebookAdsAPI($activeAccount['account_id']);
             $data = $api->getAllData($dateSince, $dateUntil);
+            
+            if (connection_aborted()) {
+                exit;
+            }
             
             if (isset($data['error'])) {
                 if (strpos($data['error'], 'User request limit reached') !== false) {
