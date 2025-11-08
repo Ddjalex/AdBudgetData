@@ -238,6 +238,11 @@ function formatCurrency($amount) {
         <?php endif; ?>
 
         <?php if ($isConfigured): ?>
+            <div style="background: #e7f3ff; border-left: 4px solid #1877f2; padding: 15px 20px; margin-bottom: 20px; border-radius: 6px;">
+                <strong style="color: #1877f2;">💡 Tip: Use Narrow Time Periods</strong>
+                <p style="margin: 8px 0 0 0; color: #444;">To avoid Facebook API rate limits, use <strong>Today</strong>, <strong>Yesterday</strong>, or <strong>This Week</strong>. Wide date ranges make many API calls and may hit rate limits.</p>
+            </div>
+
             <div class="filter-section">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="load_data" value="1">
@@ -245,12 +250,11 @@ function formatCurrency($amount) {
                         <div class="filter-group">
                             <label>Time Period</label>
                             <select name="filter" id="filterSelect" onchange="toggleDateRange()">
-                                <option value="today" <?php echo $filterType === 'today' ? 'selected' : ''; ?>>Today</option>
-                                <option value="yesterday" <?php echo $filterType === 'yesterday' ? 'selected' : ''; ?>>Yesterday</option>
-                                <option value="this_week" <?php echo $filterType === 'this_week' ? 'selected' : ''; ?>>This Week</option>
-                                <option value="this_month" <?php echo $filterType === 'this_month' ? 'selected' : ''; ?>>This Month</option>
-                                <option value="all" <?php echo $filterType === 'all' ? 'selected' : ''; ?>>All Time</option>
-                                <option value="custom" <?php echo $filterType === 'custom' ? 'selected' : ''; ?>>Custom Date Range</option>
+                                <option value="today" <?php echo $filterType === 'today' ? 'selected' : ''; ?>>📅 Today (Recommended)</option>
+                                <option value="yesterday" <?php echo $filterType === 'yesterday' ? 'selected' : ''; ?>>📅 Yesterday</option>
+                                <option value="this_week" <?php echo $filterType === 'this_week' ? 'selected' : ''; ?>>📅 This Week</option>
+                                <option value="this_month" <?php echo $filterType === 'this_month' ? 'selected' : ''; ?>>⚠️ This Month (Many API calls)</option>
+                                <option value="custom" <?php echo $filterType === 'custom' ? 'selected' : ''; ?>>🔧 Custom Date Range</option>
                             </select>
                         </div>
                         
@@ -267,15 +271,15 @@ function formatCurrency($amount) {
                         
                         <div>
                             <button type="submit" id="loadBtn" onclick="showLoading()" style="background: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;">
-                                Load Productivity Data
+                                📊 Load Productivity Data
                             </button>
                         </div>
                     </div>
                 </form>
                 
                 <div id="loadingMessage" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
-                    <strong>Loading productivity data...</strong><br>
-                    Please wait, this may take up to 60 seconds.
+                    <strong>⏳ Loading data from Facebook...</strong><br>
+                    Please wait, this may take up to 60 seconds. Do not refresh the page.
                 </div>
             </div>
 
