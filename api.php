@@ -98,22 +98,36 @@ class FacebookAdsAPI {
         return ['error' => 'User request limit reached. Please wait 15-30 minutes before trying again.'];
     }
     
-    public function getCampaigns() {
+    public function getCampaigns($dateSince = null, $dateUntil = null) {
         $fields = 'id,name,effective_status,budget,daily_budget,lifetime_budget,created_time,start_time,stop_time';
         $endpoint = "/{$this->adAccountId}/campaigns";
         
+        $filterConditions = [];
+        
         // Only fetch ACTIVE campaigns to reduce API calls
-        $filtering = json_encode([
-            [
-                'field' => 'effective_status',
-                'operator' => 'IN',
-                'value' => ['ACTIVE']
-            ]
-        ]);
+        $filterConditions[] = [
+            'field' => 'effective_status',
+            'operator' => 'IN',
+            'value' => ['ACTIVE']
+        ];
+        
+        // If time range is provided, filter by creation date
+        if ($dateSince && $dateUntil) {
+            $filterConditions[] = [
+                'field' => 'created_time',
+                'operator' => 'GREATER_THAN',
+                'value' => strtotime($dateSince)
+            ];
+            $filterConditions[] = [
+                'field' => 'created_time',
+                'operator' => 'LESS_THAN',
+                'value' => strtotime($dateUntil . ' 23:59:59')
+            ];
+        }
         
         $params = [
             'fields' => $fields,
-            'filtering' => $filtering,
+            'filtering' => json_encode($filterConditions),
             'limit' => 25  // Reduced from 100 to prevent rate limits
         ];
         
@@ -212,7 +226,8 @@ class FacebookAdsAPI {
     }
     
     public function getAllData($dateSince = null, $dateUntil = null) {
-        $campaigns = $this->getCampaigns();
+        // Pass time range to getCampaigns to filter by creation date
+        $campaigns = $this->getCampaigns($dateSince, $dateUntil);
         
         if (isset($campaigns['error'])) {
             return ['error' => $campaigns['error']];
