@@ -456,6 +456,9 @@ function formatDate($dateString) {
             <div id="adsets-tab" class="tab-content">
                 <div class="data-section">
                     <h2 class="section-title">Ad Sets Overview</h2>
+                    <p style="margin: -10px 0 20px; color: #65676b; font-size: 14px;">
+                        📊 <strong>Budget-focused view</strong> - Performance metrics (spend, impressions, clicks) have been removed to prevent API rate limits and ensure fast loading.
+                    </p>
                     
                     <?php if (isset($data['adsets']) && count($data['adsets']) > 0): ?>
                         <table class="data-table">
@@ -464,11 +467,10 @@ function formatDate($dateString) {
                                     <th>Ad Set Name</th>
                                     <th>Campaign</th>
                                     <th>Status</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
                                     <th>Daily Budget</th>
-                                    <th>Total Spend</th>
-                                    <th>Today's Spend</th>
-                                    <th>Impressions</th>
-                                    <th>Clicks</th>
+                                    <th>Lifetime Budget</th>
                                     <th>Ad Set ID</th>
                                 </tr>
                             </thead>
@@ -477,7 +479,17 @@ function formatDate($dateString) {
                                     <tr>
                                         <td><strong><?php echo htmlspecialchars($adset['name']); ?></strong></td>
                                         <td><?php echo htmlspecialchars($adset['campaign_name'] ?? 'N/A'); ?></td>
-                                        <td><?php echo getStatusBadge($adset['status']); ?></td>
+                                        <td><?php echo getStatusBadge($adset['effective_status'] ?? $adset['status']); ?></td>
+                                        <td><?php echo formatDate($adset['start_time'] ?? ''); ?></td>
+                                        <td>
+                                            <?php 
+                                            if (isset($adset['end_time']) && !empty($adset['end_time'])) {
+                                                echo formatDate($adset['end_time']);
+                                            } else {
+                                                echo '<span style="color: #28a745; font-weight: 600;">Continuous</span>';
+                                            }
+                                            ?>
+                                        </td>
                                         <td>
                                             <?php 
                                             if (isset($adset['daily_budget'])) {
@@ -488,42 +500,11 @@ function formatDate($dateString) {
                                             ?>
                                         </td>
                                         <td>
-                                            <span class="spend-total">
-                                                <?php 
-                                                if (isset($data['insights']['adset'][$adset['id']]['lifetime']['spend'])) {
-                                                    echo formatCurrency($data['insights']['adset'][$adset['id']]['lifetime']['spend']);
-                                                } else {
-                                                    echo '$0.00';
-                                                }
-                                                ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="spend-today">
-                                                <?php 
-                                                if (isset($data['insights']['adset'][$adset['id']]['today']['spend'])) {
-                                                    echo formatCurrency($data['insights']['adset'][$adset['id']]['today']['spend']);
-                                                } else {
-                                                    echo '$0.00';
-                                                }
-                                                ?>
-                                            </span>
-                                        </td>
-                                        <td>
                                             <?php 
-                                            if (isset($data['insights']['adset'][$adset['id']]['today']['impressions'])) {
-                                                echo formatNumber($data['insights']['adset'][$adset['id']]['today']['impressions']);
+                                            if (isset($adset['lifetime_budget'])) {
+                                                echo formatBudgetFromCents($adset['lifetime_budget']);
                                             } else {
-                                                echo '0';
-                                            }
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            if (isset($data['insights']['adset'][$adset['id']]['today']['clicks'])) {
-                                                echo formatNumber($data['insights']['adset'][$adset['id']]['today']['clicks']);
-                                            } else {
-                                                echo '0';
+                                                echo 'N/A';
                                             }
                                             ?>
                                         </td>
@@ -544,6 +525,9 @@ function formatDate($dateString) {
             <div id="ads-tab" class="tab-content">
                 <div class="data-section">
                     <h2 class="section-title">Ads Overview</h2>
+                    <p style="margin: -10px 0 20px; color: #65676b; font-size: 14px;">
+                        📊 <strong>Budget-focused view</strong> - Performance metrics (spend, impressions, clicks) have been removed to prevent API rate limits and ensure fast loading.
+                    </p>
                     
                     <?php if (isset($data['ads']) && count($data['ads']) > 0): ?>
                         <table class="data-table">
@@ -553,10 +537,7 @@ function formatDate($dateString) {
                                     <th>Ad Set</th>
                                     <th>Campaign</th>
                                     <th>Status</th>
-                                    <th>Today's Spend</th>
-                                    <th>Impressions</th>
-                                    <th>Clicks</th>
-                                    <th>Creative ID</th>
+                                    <th>Created Date</th>
                                     <th>Ad ID</th>
                                 </tr>
                             </thead>
@@ -566,45 +547,8 @@ function formatDate($dateString) {
                                         <td><strong><?php echo htmlspecialchars($ad['name']); ?></strong></td>
                                         <td><?php echo htmlspecialchars($ad['adset_name'] ?? 'N/A'); ?></td>
                                         <td><?php echo htmlspecialchars($ad['campaign_name'] ?? 'N/A'); ?></td>
-                                        <td><?php echo getStatusBadge($ad['status']); ?></td>
-                                        <td>
-                                            <span class="spend-today">
-                                                <?php 
-                                                if (isset($data['insights']['ad'][$ad['id']]['today']['spend'])) {
-                                                    echo formatCurrency($data['insights']['ad'][$ad['id']]['today']['spend']);
-                                                } else {
-                                                    echo '$0.00';
-                                                }
-                                                ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            if (isset($data['insights']['ad'][$ad['id']]['today']['impressions'])) {
-                                                echo formatNumber($data['insights']['ad'][$ad['id']]['today']['impressions']);
-                                            } else {
-                                                echo '0';
-                                            }
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            if (isset($data['insights']['ad'][$ad['id']]['today']['clicks'])) {
-                                                echo formatNumber($data['insights']['ad'][$ad['id']]['today']['clicks']);
-                                            } else {
-                                                echo '0';
-                                            }
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            if (isset($ad['creative']['id'])) {
-                                                echo '<code>' . htmlspecialchars($ad['creative']['id']) . '</code>';
-                                            } else {
-                                                echo 'N/A';
-                                            }
-                                            ?>
-                                        </td>
+                                        <td><?php echo getStatusBadge($ad['effective_status'] ?? $ad['status']); ?></td>
+                                        <td><?php echo formatDate($ad['created_time'] ?? ''); ?></td>
                                         <td>
                                             <a href="https://www.facebook.com/ads/manager/account/campaigns/?act=<?php echo urlencode(str_replace('act_', '', $activeAccount['account_id'])); ?>&selected_ad_ids=<?php echo urlencode($ad['id']); ?>" 
                                                class="ad-link" target="_blank" rel="noopener noreferrer">
