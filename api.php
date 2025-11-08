@@ -214,16 +214,21 @@ class FacebookAdsAPI {
             foreach ($campaigns['data'] as $campaign) {
                 $data['campaigns'][] = $campaign;
                 
-                // OPTIMIZATION: Only fetch campaign-level insights to reduce API calls by 80-90%
-                // This prevents rate limits while maintaining budget tracking functionality
-                $campaignLifetimeInsights = $this->getCampaignInsights($campaign['id'], 'lifetime', $dateSince, $dateUntil);
-                if (isset($campaignLifetimeInsights['data'][0])) {
-                    $data['insights']['campaign'][$campaign['id']]['lifetime'] = $campaignLifetimeInsights['data'][0];
-                }
+                // OPTIMIZATION: Skip insights for PAUSED/DELETED campaigns to reduce API calls
+                $isActive = isset($campaign['effective_status']) && $campaign['effective_status'] === 'ACTIVE';
                 
-                $campaignTodayInsights = $this->getCampaignInsights($campaign['id'], 'today', $dateSince, $dateUntil);
-                if (isset($campaignTodayInsights['data'][0])) {
-                    $data['insights']['campaign'][$campaign['id']]['today'] = $campaignTodayInsights['data'][0];
+                if ($isActive) {
+                    // OPTIMIZATION: Only fetch campaign-level insights to reduce API calls by 80-90%
+                    // This prevents rate limits while maintaining budget tracking functionality
+                    $campaignLifetimeInsights = $this->getCampaignInsights($campaign['id'], 'lifetime', $dateSince, $dateUntil);
+                    if (isset($campaignLifetimeInsights['data'][0])) {
+                        $data['insights']['campaign'][$campaign['id']]['lifetime'] = $campaignLifetimeInsights['data'][0];
+                    }
+                    
+                    $campaignTodayInsights = $this->getCampaignInsights($campaign['id'], 'today', $dateSince, $dateUntil);
+                    if (isset($campaignTodayInsights['data'][0])) {
+                        $data['insights']['campaign'][$campaign['id']]['today'] = $campaignTodayInsights['data'][0];
+                    }
                 }
                 
                 // Fetch ad sets structure (no insights - saves 2 API calls per ad set)
